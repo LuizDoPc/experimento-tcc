@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package protobuf;
+
+option java_package = "com.example.javagrpc";
+option java_outer_classname = "ArrayDefinition";
+
+message Array {
+  repeated int32 array = 1;
+}
+
+message Num {
+  int32 num = 1;
+}
+
+service ArrayService {
+  rpc Search(Array) returns (Num);
+}

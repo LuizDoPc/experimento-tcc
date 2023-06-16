@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package array;
+
+option java_package = "com.example.javagrpc.helloworld";
+option java_outer_classname = "HelloWorldProto";
+
+message Array {
+  repeated int32 array = 1;
+}
+
+message Num {
+  int32 num = 1;
+}
+
+service ArrayService {
+  rpc Search(Array) returns (Num);
+}
