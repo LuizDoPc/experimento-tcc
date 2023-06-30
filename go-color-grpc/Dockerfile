@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY /api .
 
-COPY /graph ./graph
+COPY /array ./array
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /goColorGrpc
 

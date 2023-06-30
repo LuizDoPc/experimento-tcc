@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: go-grpc
+spec:
+  selector:
+    app: go-grpc
+  ports:
+  - port: 80
+    targetPort: 50001
+  type: ClusterIP #
