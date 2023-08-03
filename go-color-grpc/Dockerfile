@@ -16,7 +16,7 @@ FROM alpine:latest
 
 COPY --from=builder /goColorGrpc /goColorGrpc 
 
-EXPOSE 8081
+EXPOSE 8080
 EXPOSE 50001
 
 CMD [ "./goColorGrpc" ]

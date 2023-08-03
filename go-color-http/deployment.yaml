@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: go-http
-        image: luizdopc/go-http:v0.1
+        image: luizdopc/go-http:v0.4
         resources:
           requests:
             memory: "64Mi"

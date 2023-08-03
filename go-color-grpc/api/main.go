@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 )
 
@@ -47,9 +48,10 @@ func main() {
 	}()
 
 	// Start the HTTP server
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	r.POST("/color-graph", func(c *gin.Context) {
 	})
 
-	fmt.Println("Server started at http://localhost:8081")
-	r.Run(":8082")
+	fmt.Println("Server started at http://localhost:8080")
+	r.Run(":8080")
 }

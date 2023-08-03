@@ -1,0 +1,35 @@
+version: '3.3'
+
+networks:
+  aw-network:
+   driver: bridge
+
+volumes:
+  prometheus_data:
+   
+services:
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus_go_grpc
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - 9090:9090
+    networks:
+      - aw-network
+  java-http:
+    image: luizdopc/go-grpc:v0.2
+    container_name: go-grpc
+    ports:
+      - 8080:8080
+      - 50001:50001
+    networks:
+      - aw-network
+  grafana:
+    image: grafana/grafana
+    container_name: grafana_go_grpc
+    ports:
+      - 3000:3000
+    networks:
+      - aw-network

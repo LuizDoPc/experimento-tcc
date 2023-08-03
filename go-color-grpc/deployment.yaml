@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: go-grpc
-        image: luizdopc/go-grpc
+        image: luizdopc/go-grpc:v0.1
         resources:
           requests:
             memory: "64Mi"
