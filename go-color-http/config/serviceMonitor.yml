@@ -2,17 +2,17 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   annotations:
-    meta.helm.sh/release-name: javahttptest
-    meta.helm.sh/release-namespace: monitoring
+    meta.helm.sh/release-name: gohttptest
+    meta.helm.sh/release-namespace: default
   labels:
-    app.kubernetes.io/instance: javahttptest
+    app.kubernetes.io/instance: gohttptest
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: helm-chart
     app.kubernetes.io/version: 1.16.0
     helm.sh/chart: helm-chart-0.1.0
-    release: javahttptest
-  name: javahttptest-helm-chart
-  namespace: monitoring
+    release: gohttptest
+  name: gohttptest-helm-chart
+  namespace: default
 spec:
   endpoints:
   - honorLabels: true
@@ -20,5 +20,5 @@ spec:
     path: /actuator/prometheus
   selector:
     matchLabels:
-      app.kubernetes.io/instance: javahttptest
+      app.kubernetes.io/instance: gohttptest
       app.kubernetes.io/name: helm-chart

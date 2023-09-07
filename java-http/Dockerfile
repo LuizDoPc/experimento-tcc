@@ -1,5 +1,4 @@
-# Use a lightweight Linux distribution as the base image
-FROM bellsoft/liberica-openjdk-alpine-musl:17 AS builder
+FROM --platform=linux/amd64 ubuntu:20.04 AS builder
 
 # Set the working directory in the container
 WORKDIR /app
@@ -10,6 +9,15 @@ COPY .mvn .mvn
 
 # Copy the project descriptor files
 COPY pom.xml .
+
+# Atualize os pacotes do sistema
+RUN apt-get update
+
+# Instale o OpenJDK 17
+RUN apt-get install -y openjdk-17-jdk
+
+# # Defina a variável de ambiente JAVA_HOME
+RUN export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Download the project dependencies
 RUN ./mvnw dependency:go-offline -B
