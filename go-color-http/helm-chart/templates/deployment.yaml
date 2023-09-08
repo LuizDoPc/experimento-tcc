@@ -35,10 +35,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.service.newPorts.http }}
-              protocol: TCP
-            - name: grpc
-              containerPort: {{ .Values.service.newPorts.grpc }}
+              containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
             httpGet:

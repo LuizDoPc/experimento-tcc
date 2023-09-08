@@ -86,6 +86,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <version>1.11.2</version>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty</artifactId>
+            <version>1.56.1</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -130,6 +140,10 @@
                 <configuration>
                     <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:linux-x86_64</protocArtifact>
                     <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.40.1:exe:linux-x86_64</pluginArtifact>
+
+                    <!-- <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:osx-x86_64</protocArtifact>
+                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.40.1:exe:osx-x86_64</pluginArtifact> -->
+ 
                     <pluginId>grpc-java</pluginId>
                 </configuration>
                 <executions>

@@ -5,10 +5,10 @@
 replicaCount: 1
 
 image:
-  repository: luizdopc/java-grpc
+  repository: luizdopc/go-grpc
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.4"
+  tag: "v0.2"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -41,7 +41,7 @@ service:
   port: 8080
   newPorts:
     http: 8080
-    grpc: 50051
+    grpc: 50001
 
 ingress:
   enabled: false
@@ -59,18 +59,17 @@ ingress:
   #    hosts:
   #      - chart-example.local
 
-resources:
+resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  limits:
-    cpu: 500m
-    memory: 1024Mi
-  requests:
-    cpu: 500m
-    memory: 500Mi
-
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
 
 autoscaling:
   enabled: false

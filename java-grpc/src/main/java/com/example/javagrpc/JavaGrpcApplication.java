@@ -1,7 +1,13 @@
 package com.example.javagrpc;
 
+import io.grpc.BindableService;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.ServerInterceptors;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -15,8 +21,10 @@ public class JavaGrpcApplication {
 
         int port = 50051;
 
+        MeterRegistry registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+
         Server server = ServerBuilder.forPort(port)
-                .addService(new ArrayController())
+                .addService(ServerInterceptors.intercept((BindableService) new ArrayController(), new GrpcServerRequestInterceptor(registry)))
                 .build();
 
         System.out.println("Starting gRPC server on port " + port);
@@ -24,5 +32,4 @@ public class JavaGrpcApplication {
         server.start();
         server.awaitTermination();
     }
-
 }
