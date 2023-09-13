@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 )
@@ -20,6 +21,8 @@ func (s *ArrayServiceServer) Search(ctx context.Context, req *pb.Array) (*pb.Num
 		log.Println(i)
 	}
 
+	s.customCounter.Inc()
+
 	n := pb.Num{
 		Num: -1,
 	}
@@ -28,11 +31,19 @@ func (s *ArrayServiceServer) Search(ctx context.Context, req *pb.Array) (*pb.Num
 
 type ArrayServiceServer struct{
 	pb.UnimplementedArrayServiceServer
+	customCounter prometheus.Counter
 }
 
 
 func main() {
 	r := gin.Default()
+
+	customCounter := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "request_counter_total",
+		Help: "Contador de requests",
+	})
+
+	prometheus.MustRegister(customCounter)
 
 	// Start the gRPC server
 	lis, err := net.Listen("tcp", ":50001")
@@ -40,7 +51,9 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterArrayServiceServer(s, &ArrayServiceServer{})
+	pb.RegisterArrayServiceServer(s, &ArrayServiceServer{
+		customCounter: customCounter,
+	})
 	go func() {
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)
@@ -49,8 +62,6 @@ func main() {
 
 	// Start the HTTP server
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
-	r.POST("/color-graph", func(c *gin.Context) {
-	})
 
 	fmt.Println("Server started at http://localhost:8080")
 	r.Run(":8080")

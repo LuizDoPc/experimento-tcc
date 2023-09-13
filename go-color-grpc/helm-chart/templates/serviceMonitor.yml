@@ -12,7 +12,7 @@ metadata:
     helm.sh/chart: helm-chart-0.1.0
     release: gogrpctest
   name: gogrpctest-helm-chart
-  namespace: default
+  namespace: monitoring
 spec:
   endpoints:
   - honorLabels: true
