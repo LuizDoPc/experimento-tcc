@@ -12,12 +12,11 @@ metadata:
     helm.sh/chart: helm-chart-0.1.0
     release: gohttptest
   name: gohttptest-helm-chart
-  namespace: default
+  namespace: monitoring
 spec:
   endpoints:
   - honorLabels: true
     port: http
-    path: /actuator/prometheus
   selector:
     matchLabels:
       app.kubernetes.io/instance: gohttptest

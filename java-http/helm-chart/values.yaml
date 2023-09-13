@@ -83,17 +83,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-grafana:
-  enabled: true
-  deploymentStrategy:
-    type: Recreate
-  persistence:
-   enabled: true
-  type: pvc
-  storageClassName: default
-  accessModes:
-  - ReadWriteOnce
-  size: 4Gi
-  finalizers:
-  - kubernetes.io/pvc-protection

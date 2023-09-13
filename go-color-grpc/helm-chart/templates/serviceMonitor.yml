@@ -17,7 +17,6 @@ spec:
   endpoints:
   - honorLabels: true
     port: http
-    path: /actuator/prometheus
   selector:
     matchLabels:
       app.kubernetes.io/instance: gogrpctest

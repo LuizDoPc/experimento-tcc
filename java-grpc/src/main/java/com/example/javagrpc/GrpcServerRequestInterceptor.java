@@ -3,6 +3,7 @@ package com.example.javagrpc;
 import io.grpc.*;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -10,11 +11,13 @@ public class GrpcServerRequestInterceptor implements ServerInterceptor {
 
     private final Counter customCounter;
 
-    public GrpcServerRequestInterceptor(MeterRegistry meterRegistry) {
+    @Autowired
+    public GrpcServerRequestInterceptor(MeterRegistry registry) {
+        System.out.println("Criei intercepter");
         this.customCounter = Counter
                 .builder("request_counter")
                 .description("Contador de requisições")
-                .register(meterRegistry);
+                .register(registry);
     }
 
     @Override
@@ -23,6 +26,8 @@ public class GrpcServerRequestInterceptor implements ServerInterceptor {
 
 
         System.out.println("gRPC request intercepted");
+        System.out.println(customCounter.count());
+        System.out.println(customCounter.toString());
 
         customCounter.increment();
 

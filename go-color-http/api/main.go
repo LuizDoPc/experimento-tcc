@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -21,6 +22,13 @@ func search(array Array) int {
 func main() {
 	r := gin.Default()
 
+	customCounter := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "request_counter_total",
+		Help: "Counter for requests",
+	})
+
+	prometheus.MustRegister(customCounter)
+
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	r.POST("/foo", func(c *gin.Context) {
 		var array Array
@@ -30,6 +38,8 @@ func main() {
 		}
 
 		index := search(array)
+
+		customCounter.Inc()
 
 		c.JSON(200, index)
 	})

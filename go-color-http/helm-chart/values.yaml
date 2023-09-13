@@ -8,7 +8,7 @@ image:
   repository: luizdopc/go-http
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.4"
+  tag: "v0.6"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -80,17 +80,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-grafana:
-  enabled: true
-  deploymentStrategy:
-    type: Recreate
-  persistence:
-   enabled: true
-  type: pvc
-  storageClassName: default
-  accessModes:
-  - ReadWriteOnce
-  size: 4Gi
-  finalizers:
-  - kubernetes.io/pvc-protection

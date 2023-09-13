@@ -1,10 +1,5 @@
 package com.example.javagrpc;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import io.micrometer.core.instrument.Counter;
-
 public class ArrayController extends ArrayServiceGrpc.ArrayServiceImplBase {
 
     @Override
