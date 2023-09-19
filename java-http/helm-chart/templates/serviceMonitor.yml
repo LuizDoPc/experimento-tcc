@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/name: helm-chart
     app.kubernetes.io/version: 1.16.0
     helm.sh/chart: helm-chart-0.1.0
-    release: javahttptest
+    release: kube-prometheus-stack
   name: javahttptest-helm-chart
   namespace: monitoring
 spec:

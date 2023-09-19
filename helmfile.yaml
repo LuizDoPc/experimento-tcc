@@ -1,0 +1,21 @@
+repositories:
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
+
+
+releases:
+  - name: kube-prometheus-stack
+    namespace: monitoring
+    chart: prometheus-community/kube-prometheus-stack
+  - name: javahttptest
+    namespace: monitoring
+    chart: java-http/helm-chart
+  - name: javagrpctest
+    namespace: monitoring
+    chart: java-grpc/helm-chart
+  - name: gohttptest
+    namespace: monitoring
+    chart: go-http/helm-chart
+  - name: gogrpctest
+    namespace: monitoring
+    chart: go-grpc/helm-chart

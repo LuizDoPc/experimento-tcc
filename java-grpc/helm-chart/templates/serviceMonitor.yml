@@ -3,14 +3,14 @@ kind: ServiceMonitor
 metadata:
   annotations:
     meta.helm.sh/release-name: javagrpctest
-    meta.helm.sh/release-namespace: default
+    meta.helm.sh/release-namespace: monitoring
   labels:
     app.kubernetes.io/instance: javagrpctest
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: helm-chart
     app.kubernetes.io/version: 1.16.0
     helm.sh/chart: helm-chart-0.1.0
-    release: javagrpctest
+    release: kube-prometheus-stack
   name: javagrpctest-helm-chart
   namespace: monitoring
 spec:
