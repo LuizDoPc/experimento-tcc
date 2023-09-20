@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,8 +30,23 @@ func main() {
 
 	prometheus.MustRegister(customCounter)
 
+	counter := 0
+
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	r.POST("/foo", func(c *gin.Context) {
+		requestDuration := prometheus.NewSummary(prometheus.SummaryOpts{
+			Name:    "request_timer",
+			Help:    "Duração do request",
+			ConstLabels: map[string]string{"c": strconv.Itoa(counter)},
+		})
+
+		counter++
+
+		prometheus.MustRegister(requestDuration)
+
+		timer := prometheus.NewTimer(requestDuration)
+		defer timer.ObserveDuration()
+
 		var array Array
 		if err := c.ShouldBindJSON(&array); err != nil {
 			c.JSON(400, gin.H{"error": "Error parsing"})
