@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	pb "go-color-grpc/array"
+	pb "go-color-grpc/protobuf"
 	"log"
 	"net"
 	"strconv"

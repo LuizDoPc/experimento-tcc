@@ -8,7 +8,7 @@ RUN go mod download
 
 COPY /api .
 
-COPY /array ./array
+COPY /protobuf ./protobuf
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /goColorGrpc
 

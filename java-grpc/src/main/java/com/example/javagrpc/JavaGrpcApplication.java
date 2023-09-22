@@ -13,7 +13,7 @@ public class JavaGrpcApplication {
     public static void main(String[] args) throws IOException, InterruptedException {
         SpringApplication.run(JavaGrpcApplication.class, args);
 
-        int port = 50051;
+        int port = 50059;
 
         Server server = ServerBuilder.forPort(port)
                 .addService(new ArrayController())
