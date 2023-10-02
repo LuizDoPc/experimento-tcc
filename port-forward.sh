@@ -4,13 +4,14 @@ NAMESPACE="monitoring"
 
 LABELS=("gohttptest" "gogrpctest" "javahttptest" "javagrpctest")
 
-PORTS=("8081:8080" "8084:8080,50052:50001" "8080:8080" "8083:8080,50051:50051")
+PORTS=("8081:8080" "8084:8080,50052:50001" "8080:8080" "8083:8080,50051:50059")
 
 port_forward() {
   local pod_label="$1"
   local port_mappings="$2"
+  local label_key="$3"
   
-  local pod_name=$(kubectl get pods -n $NAMESPACE -l "app.kubernetes.io/instance=$pod_label" -o jsonpath="{.items[0].metadata.name}")
+  local pod_name=$(kubectl get pods -n $NAMESPACE -l "$label_key=$pod_label" -o jsonpath="{.items[0].metadata.name}")
   
   if [ -z "$pod_name" ]; then
     echo "Nenhum Pod encontrado com o label app.kubernetes.io/instance=$pod_label no namespace $NAMESPACE."
@@ -26,7 +27,9 @@ for ((i=0; i<${#LABELS[@]}; i++)); do
   LABEL="${LABELS[$i]}"
   PORT_MAPPING="${PORTS[$i]}"
   
-  port_forward "$LABEL" "$PORT_MAPPING"
+  port_forward "$LABEL" "$PORT_MAPPING" "app.kubernetes.io/instance"
 done
+
+port_forward "grafana" "3000:3000" "app.kubernetes.io/name"
 
 wait
