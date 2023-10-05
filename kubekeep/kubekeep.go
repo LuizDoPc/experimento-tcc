@@ -49,7 +49,7 @@ func main() {
 
 		// Itere sobre os Deployments e ajuste a estratégia para 0 e depois para 1 réplica, exceto para o Deployment especificado
 		for _, deployment := range deployments.Items {
-			if deployment.Name != keepDeployment+"test-helm-chart" {
+			if deployment.Name != keepDeployment+"test-helm-chart" && deployment.Name != "kube-prometheus-stack-operator" {
 				fmt.Printf("Ajustando o Deployment %s para 0 réplicas...\n", deployment.Name)
 
 				// Configure a réplica para 0
@@ -60,10 +60,10 @@ func main() {
 				} else {
 					fmt.Printf("Deployment %s ajustado para 0 réplicas com sucesso.\n", deployment.Name)
 				}
-			}else {
+			} else {
 				fmt.Printf("Ajustando o Deployment %s para 1 réplicas...\n", deployment.Name)
 
-				// Configure a réplica para 0
+				// Configure a réplica para 1
 				deployment.Spec.Replicas = int32Ptr(1)
 				_, err = clientset.AppsV1().Deployments("monitoring").Update(ctx, &deployment, metav1.UpdateOptions{})
 				if err != nil {
