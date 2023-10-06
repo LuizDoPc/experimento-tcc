@@ -18,11 +18,11 @@ import (
 )
 
 const (
-	numReqs      = 350
-	httpURL1     = "http://localhost:8080/foo"
-	httpURL2     = "http://localhost:8081/foo"
-	grpcAddress1 = "localhost:50051"
-	grpcAddress2 = "localhost:50052"
+	numReqs      = 10
+	httpURL1     = "http://172.18.255.203/foo"
+	httpURL2     = "http://172.18.255.202:8080/foo"
+	grpcAddress1 = "172.18.255.204:50059"
+	grpcAddress2 = "172.18.255.201:50001"
 )
 
 func getPayload(isHTTP bool) interface{} {

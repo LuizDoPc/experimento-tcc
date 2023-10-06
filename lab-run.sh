@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#kubekeep -k javahttp
+kubekeep -k javahttp
 
-#sleep 25
+sleep 25
 
 ./port-forward.sh javahttptest &
 
@@ -10,9 +10,9 @@ lab-client -javahttp
 
 ###
 
-#kubekeep -k javagrpc
+kubekeep -k javagrpc
 
-#sleep 25
+sleep 25
 
 ./port-forward.sh javagrpctest &
 
@@ -20,9 +20,9 @@ lab-client -javagrpc
 
 ###
 
-#kubekeep -k gohttp
+kubekeep -k gohttp
 
-#sleep 25
+sleep 25
 
 ./port-forward.sh gohttptest &
 
@@ -34,7 +34,7 @@ lab-client -gohttp
 
 #sleep 25
 
-./port-forward.sh gogrpctest &
+#./port-forward.sh gogrpctest &
 
-lab-client -gogrpc
+#lab-client -gogrpc
 
