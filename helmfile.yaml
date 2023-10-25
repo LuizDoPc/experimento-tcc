@@ -1,21 +1,43 @@
 repositories:
   - name: prometheus-community
     url: https://prometheus-community.github.io/helm-charts
-
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
 
 releases:
   - name: kube-prometheus-stack
     namespace: monitoring
     chart: prometheus-community/kube-prometheus-stack
+
   - name: javahttptest
     namespace: monitoring
     chart: java-http/helm-chart
+    needs:
+      - monitoring/kube-prometheus-stack
+
   - name: javagrpctest
     namespace: monitoring
     chart: java-grpc/helm-chart
+    needs:
+      - monitoring/kube-prometheus-stack
+
   - name: gohttptest
     namespace: monitoring
     chart: go-http/helm-chart
+    needs:
+      - monitoring/kube-prometheus-stack
+
   - name: gogrpctest
     namespace: monitoring
     chart: go-grpc/helm-chart
+    needs:
+      - monitoring/kube-prometheus-stack
+
+  - name: metallb
+    namespace: metallb-system
+    chart: bitnami/metallb
+    hooks:
+    - events: ["postupgrade", "postinstall", "postsync"]
+      showlogs: true
+      command: "kubectl"
+      args: ["apply", "-f", "./metallb.yaml"]

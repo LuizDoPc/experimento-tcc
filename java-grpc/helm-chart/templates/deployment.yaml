@@ -42,7 +42,7 @@ spec:
               protocol: TCP
               env:
                 - name: WARMUP_COUNT
-                  value: {{ .Values.warmupCount }}
+                  value: "{{ .Values.warmupCount }}"
           # livenessProbe:
           #   httpGet:
           #     path: /

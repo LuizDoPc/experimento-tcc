@@ -8,7 +8,7 @@ image:
   repository: luizdopc/java-grpc
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.8"
+  tag: "v0.9"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -85,4 +85,4 @@ tolerations: []
 
 affinity: {}
 
-warmupCount: 1000
+warmupCount: "10"

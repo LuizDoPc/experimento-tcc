@@ -18,7 +18,7 @@ public class ArrayController {
     private final MeterRegistry currentRegistry;
     
     @Value("${WARMUP_COUNT}")
-    private int warmupCount;
+    private String warmupCount;
 
     public ArrayController(MeterRegistry registry){
         this.currentRegistry = registry;
@@ -39,7 +39,7 @@ public class ArrayController {
         }
 
         System.out.println("Warmup count: " + warmupCount);
-        if(requestCounter.count() > warmupCount){
+        if(requestCounter.count() > Integer.parseInt(warmupCount)){
             requestCounter.increment();
             t.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
         }
