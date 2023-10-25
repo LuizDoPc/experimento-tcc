@@ -8,9 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 
 public class ArrayController extends ArrayServiceGrpc.ArrayServiceImplBase {
 
-    @Value("${WARMUP_COUNT}")
-    private String warmupCount;
-
     @Override
     public void search(com.example.javagrpc.ArrayDefinition.Array request,
                        io.grpc.stub.StreamObserver<com.example.javagrpc.ArrayDefinition.Num> responseObserver){
@@ -21,9 +18,8 @@ public class ArrayController extends ArrayServiceGrpc.ArrayServiceImplBase {
              System.out.println(numbers[i]);
         }
 
-        System.out.println("Warmup count: " + warmupCount);
-        if(Metrics.counter("request_counter").count() > Integer.parseInt(warmupCount)){
-            Metrics.counter("request_counter").increment();
+        Metrics.counter("request_counter").increment();
+        if(Metrics.counter("request_counter").count() > 100){
             Metrics.timer(
                     "request_timer",
                     "c", Double.toString(Metrics.counter("request_counter").count())

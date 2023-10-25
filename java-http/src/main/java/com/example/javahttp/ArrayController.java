@@ -17,9 +17,6 @@ public class ArrayController {
     private final Counter requestCounter;
     private final MeterRegistry currentRegistry;
     
-    @Value("${WARMUP_COUNT}")
-    private String warmupCount;
-
     public ArrayController(MeterRegistry registry){
         this.currentRegistry = registry;
 
@@ -32,15 +29,14 @@ public class ArrayController {
     @PostMapping("/foo")
     public int helloWorld(@RequestBody int[] numbers) {
         long start = System.nanoTime();
-        Timer t = currentRegistry.timer("request_timer", "c", Double.toString(requestCounter.count()));
 
         for(int i=0; i<numbers.length; i++){
             System.out.println(i);
         }
 
-        System.out.println("Warmup count: " + warmupCount);
-        if(requestCounter.count() > Integer.parseInt(warmupCount)){
-            requestCounter.increment();
+        requestCounter.increment();
+        if(requestCounter.count() > 100){
+            Timer t = currentRegistry.timer("request_timer", "c", Double.toString(requestCounter.count()));
             t.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
         }
         return -1;

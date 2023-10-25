@@ -114,7 +114,7 @@ func main() {
 
 	flag.Parse()
 
-	sizeType := 1
+	sizeType := 2
 
 	// Configuração do cliente Kubernetes
 	config, err := clientcmd.BuildConfigFromFlags("", "../kubekeep/kubeconfig.yaml")
