@@ -4,7 +4,12 @@ import io.micrometer.core.instrument.Metrics;
 
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
+
 public class ArrayController extends ArrayServiceGrpc.ArrayServiceImplBase {
+
+    @Value("${WARMUP_COUNT}")
+    private String warmupCount;
 
     @Override
     public void search(com.example.javagrpc.ArrayDefinition.Array request,
@@ -16,11 +21,14 @@ public class ArrayController extends ArrayServiceGrpc.ArrayServiceImplBase {
              System.out.println(numbers[i]);
         }
 
-        Metrics.counter("request_counter").increment();
-        Metrics.timer(
-                "request_timer",
-                "c", Double.toString(Metrics.counter("request_counter").count())
-        ).record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+        System.out.println("Warmup count: " + warmupCount);
+        if(Metrics.counter("request_counter").count() > Integer.parseInt(warmupCount)){
+            Metrics.counter("request_counter").increment();
+            Metrics.timer(
+                    "request_timer",
+                    "c", Double.toString(Metrics.counter("request_counter").count())
+            ).record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+        }
 
         responseObserver.onNext(com.example.javagrpc.ArrayDefinition.Num.newBuilder().setNum(-1).build());
         responseObserver.onCompleted();

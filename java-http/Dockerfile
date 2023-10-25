@@ -20,7 +20,7 @@ RUN apt-get install -y openjdk-17-jdk
 RUN export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Download the project dependencies
-RUN ./mvnw dependency:go-offline -B
+RUN MAVEN_OPTS="-Xms512m -Xmx512m -XX:CompileThreshold=1000" ./mvnw dependency:go-offline -B
 
 # Copy the application source code
 COPY src src

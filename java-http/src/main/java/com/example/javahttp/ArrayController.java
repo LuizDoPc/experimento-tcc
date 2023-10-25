@@ -3,6 +3,8 @@ package com.example.javahttp;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,6 +16,9 @@ public class ArrayController {
 
     private final Counter requestCounter;
     private final MeterRegistry currentRegistry;
+    
+    @Value("${WARMUP_COUNT}")
+    private int warmupCount;
 
     public ArrayController(MeterRegistry registry){
         this.currentRegistry = registry;
@@ -33,8 +38,11 @@ public class ArrayController {
             System.out.println(i);
         }
 
-        requestCounter.increment();
-        t.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+        System.out.println("Warmup count: " + warmupCount);
+        if(requestCounter.count() > warmupCount){
+            requestCounter.increment();
+            t.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
+        }
         return -1;
     }
 }

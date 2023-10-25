@@ -37,6 +37,9 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+          env:
+            - name: WARMUP_COUNT
+              value: {{ .Values.warmupCount }} 
           # livenessProbe:
           #   httpGet:
           #     path: /

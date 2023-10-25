@@ -40,6 +40,9 @@ spec:
             - name: grpc
               containerPort: {{ .Values.service.newPorts.grpc }}
               protocol: TCP
+              env:
+                - name: WARMUP_COUNT
+                  value: {{ .Values.warmupCount }}
           # livenessProbe:
           #   httpGet:
           #     path: /
