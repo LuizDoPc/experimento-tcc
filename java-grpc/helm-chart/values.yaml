@@ -37,11 +37,11 @@ securityContext: {}
   # runAsUser: 1000
 
 service:
-  type: ClusterIP
+  type: LoadBalancer
   port: 8080
   newPorts:
     http: 8080
-    grpc: 50051
+    grpc: 50059
 
 ingress:
   enabled: false
