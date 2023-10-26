@@ -8,6 +8,11 @@ releases:
   - name: kube-prometheus-stack
     namespace: monitoring
     chart: prometheus-community/kube-prometheus-stack
+    values:
+      - grafana:
+          enabled: true
+          env:
+            GF_INSTALL_PLUGINS: "natel-plotly-panel"
 
   - name: javahttptest
     namespace: monitoring

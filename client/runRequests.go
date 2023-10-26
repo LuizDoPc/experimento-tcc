@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	numReqs      = 	11
+	numReqs      = 	450
 )
 
 func getPayload(isHTTP bool, sizeType int) interface{} {
