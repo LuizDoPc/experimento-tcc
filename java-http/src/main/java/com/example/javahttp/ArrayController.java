@@ -35,7 +35,7 @@ public class ArrayController {
         }
 
         requestCounter.increment();
-        if(requestCounter.count() > 100){
+        if(requestCounter.count() > 175){
             Timer t = currentRegistry.timer("request_timer", "c", Double.toString(requestCounter.count()));
             t.record(System.nanoTime() - start, TimeUnit.NANOSECONDS);
         }
