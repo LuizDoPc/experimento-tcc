@@ -8,7 +8,7 @@ image:
   repository: luizdopc/java-grpc
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "v0.14"
+  tag: "v0.15"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -66,7 +66,7 @@ resources:
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   limits:
     cpu: 500m
-    memory: 1024Mi
+    memory: 4048Mi
   requests:
     cpu: 500m
     memory: 500Mi

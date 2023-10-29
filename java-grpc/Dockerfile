@@ -1,46 +1,37 @@
-# Use a lightweight Linux distribution as the base image
 FROM --platform=linux/amd64 ubuntu:20.04 AS builder
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the Maven wrapper files
 COPY mvnw .
 COPY .mvn .mvn
-
-# Copy the project descriptor files
 COPY pom.xml .
 
-# Atualize os pacotes do sistema
 RUN apt-get update
+RUN apt-get install -y wget
+RUN wget https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.deb
+RUN dpkg -i jdk-17_linux-x64_bin.deb
+RUN rm jdk-17_linux-x64_bin.deb
 
-# Instale o OpenJDK 17
-RUN apt-get install -y openjdk-17-jdk
+ENV JAVA_HOME /usr/lib/jvm/jdk-17
 
-# # Defina a variável de ambiente JAVA_HOME
-RUN export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+RUN MAVEN_OPTS="-Xms512m -Xmx4g -XX:CompileThreshold=175 -XX:+DisableExplicitGC" ./mvnw dependency:go-offline -B -e
 
-# Download the project dependencies
-RUN MAVEN_OPTS="-Xms256m -Xmx1g -XX:CompileThreshold=175 -XX:+UseG1GC" ./mvnw dependency:go-offline -B -e
-
-# Copy the application source code
 COPY src src
 
-# Build the application
 RUN ./mvnw package -DskipTests
 
-# Use a lightweight Linux distribution as the base
-FROM bellsoft/liberica-openjre-alpine-musl:17
+FROM ubuntu:20.04
 
-# Set the working directory in the container
 WORKDIR /app
+ 
+COPY --from=builder /usr/lib/jvm/jdk-17 /usr/lib/jvm/jdk-17
 
-# Copy the built JAR file from the builder stage
+ENV JAVA_HOME /usr/lib/jvm/jdk-17
+ENV PATH $JAVA_HOME/bin:$PATH
+
 COPY --from=builder /app/target/*.jar app.jar
 
-# Expose the port that the Spring Boot application uses (if necessary)
 EXPOSE 50051
 EXPOSE 8080
 
-# Set the command to run the Spring Boot application
 CMD ["java", "-jar", "app.jar"]
