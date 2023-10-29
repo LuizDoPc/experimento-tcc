@@ -14,7 +14,7 @@ RUN rm jdk-17_linux-x64_bin.deb
 
 ENV JAVA_HOME /usr/lib/jvm/jdk-17-oracle-x64
 
-RUN MAVEN_OPTS="-Xms512m -Xmx4g -XX:CompileThreshold=3 -XX:+DisableExplicitGC" ./mvnw dependency:go-offline -B -e
+RUN MAVEN_OPTS="-Xmx3800m -Xms3800m -Xmn2g -XX:+UseParallelGC -XX:ParallelGCThreads=20" ./mvnw dependency:go-offline -B -e
 
 COPY src src
 
