@@ -19,7 +19,7 @@ public class ArrayController extends ArrayServiceGrpc.ArrayServiceImplBase {
         }
 
         Metrics.counter("request_counter").increment();
-        if(Metrics.counter("request_counter").count() > 175){
+        if(Metrics.counter("request_counter").count() > 10000){
             Metrics.timer(
                     "request_timer",
                     "c", Double.toString(Metrics.counter("request_counter").count())
