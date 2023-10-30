@@ -141,10 +141,15 @@ func main() {
 	javagrpcFlag := flag.Bool("javagrpc", false, "Testar a aplicação Java gRPC")
 	gogrpcFlag := flag.Bool("gogrpc", false, "Testar a aplicação Go gRPC")
 	runAll := flag.Bool("all", false, "Testar todas as aplicações")
+	sizeLarge := flag.Bool("sizeLarge", false, "Tamanho grande de payload")
 
 	flag.Parse()
 
-	sizeType := 2
+	sizeType := 1
+
+	if *sizeLarge {
+		sizeType = 2
+	}
 
 	config, err := clientcmd.BuildConfigFromFlags("", "/home/luiz/Documents/experimento-tcc/kubekeep/kubeconfig.yaml")
 	if err != nil {
