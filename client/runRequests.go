@@ -146,7 +146,7 @@ func main() {
 
 	sizeType := 2
 
-	config, err := clientcmd.BuildConfigFromFlags("", "../kubekeep/kubeconfig.yaml")
+	config, err := clientcmd.BuildConfigFromFlags("", "/home/luiz/Documents/experimento-tcc/kubekeep/kubeconfig.yaml")
 	if err != nil {
 		log.Fatalf("Erro ao criar configuração do cliente Kubernetes: %v", err)
 	}
