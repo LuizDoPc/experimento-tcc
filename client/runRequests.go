@@ -108,28 +108,28 @@ func getLoadBalancerIP(clientset *kubernetes.Clientset, namespace, serviceName s
 
 func sendJavaHttpRequests (url string, sizeType int, amount int) {
 	fmt.Printf("Enviando %d requisições HTTP POST para %s\n", amount, url)
-	httpPayload := getPayload(true, sizeType).(string)
+	httpPayload := getPayload(true, amount).(string)
 	interval := time.Second
 	sendHTTPPOSTRequest(url, httpPayload, interval)
 }
 
 func sendGoHttpRequests (url string, sizeType int, amount int) {
 	fmt.Printf("Enviando %d requisições HTTP POST para %s\n", amount, url)
-	httpPayload := getPayload(true, sizeType).(string)
+	httpPayload := getPayload(true, amount).(string)
 	interval := time.Second
 	sendHTTPPOSTRequest(url, httpPayload, interval)
 }
 
 func sendJavaGrpcRequests (address string, sizeType int, amount int) {
 	fmt.Printf("Enviando %d requisições gRPC para %s\n", amount, address)
-	grpcPayload := getPayload(false, sizeType).([]int32)
+	grpcPayload := getPayload(false, amount).([]int32)
 	interval := time.Second
 	sendGRPCRequest(address, grpcPayload, interval)
 }
 
 func sendGoGrpcRequests (address string, sizeType int, amount int) {
 	fmt.Printf("Enviando %d requisições gRPC para %s\n", amount, address)
-	grpcPayload := getPayload(false, sizeType).([]int32)
+	grpcPayload := getPayload(false, amount).([]int32)
 	interval := time.Second
 	sendGRPCRequest(address, grpcPayload, interval)
 }
