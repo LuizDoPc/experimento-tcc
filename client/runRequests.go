@@ -115,21 +115,21 @@ func sendJavaHttpRequests (url string, sizeType int, amount int) {
 
 func sendGoHttpRequests (url string, sizeType int, amount int) {
 	fmt.Printf("GO-HTTP - Enviando %d requisições HTTP POST para %s\n", amount, url)
-	httpPayload := getPayload(true, amount).(string)
+	httpPayload := getPayload(true, sizeType).(string)
 	interval := time.Second
 	sendHTTPPOSTRequest(url, httpPayload, interval, amount)
 }
 
 func sendJavaGrpcRequests (address string, sizeType int, amount int) {
 	fmt.Printf("JAVA-GRPC - Enviando %d requisições gRPC para %s\n", amount, address)
-	grpcPayload := getPayload(false, amount).([]int32)
+	grpcPayload := getPayload(false, sizeType).([]int32)
 	interval := time.Second
 	sendGRPCRequest(address, grpcPayload, interval, amount)
 }
 
 func sendGoGrpcRequests (address string, sizeType int, amount int) {
 	fmt.Printf("GO-GRPC - Enviando %d requisições gRPC para %s\n", amount, address)
-	grpcPayload := getPayload(false, amount).([]int32)
+	grpcPayload := getPayload(false, sizeType).([]int32)
 	interval := time.Second
 	sendGRPCRequest(address, grpcPayload, interval, amount)
 }
