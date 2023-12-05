@@ -1,4 +1,4 @@
-module client
+module lab-client
 
 go 1.18
 

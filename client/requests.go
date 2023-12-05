@@ -2,27 +2,23 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"time"
 
-	pb "client/protobuf"
-
-	"context"
+	pb "lab-client/protobuf"
 
 	"google.golang.org/grpc"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
-	numReqs      = 	350
-	numReqsJava  = 1350
+	numReqs     = 350
+	numReqsJava = 1350
 )
 
 func getPayload(isHTTP bool, sizeType int) interface{} {
@@ -93,19 +89,6 @@ func sendGRPCRequest(address string, payload []int32, interval time.Duration, am
 	}
 }
 
-func getLoadBalancerIP(clientset *kubernetes.Clientset, namespace, serviceName string) (string, error) {
-	service, err := clientset.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
-	if err != nil {
-		return "", err
-	}
-
-	if len(service.Status.LoadBalancer.Ingress) > 0 {
-		return service.Status.LoadBalancer.Ingress[0].IP, nil
-	}
-
-	return "", fmt.Errorf("IP do LoadBalancer não encontrado")
-}
-
 func sendJavaHttpRequests (url string, sizeType int, amount int) {
 	fmt.Printf("JAVA-HTTP - Enviando %d requisições HTTP POST para %s\n", amount, url)
 	httpPayload := getPayload(true, sizeType).(string)
@@ -134,46 +117,28 @@ func sendGoGrpcRequests (address string, sizeType int, amount int) {
 	sendGRPCRequest(address, grpcPayload, interval, amount)
 }
 
-
-func main() {
-	httpFlag := flag.Bool("javahttp", false, "Testar a aplicação Java HTTP")
-	gohttpFlag := flag.Bool("gohttp", false, "Testar a aplicação Go HTTP")
-	javagrpcFlag := flag.Bool("javagrpc", false, "Testar a aplicação Java gRPC")
-	gogrpcFlag := flag.Bool("gogrpc", false, "Testar a aplicação Go gRPC")
-	runAll := flag.Bool("all", false, "Testar todas as aplicações")
-	sizeLarge := flag.Bool("sizeLarge", false, "Tamanho grande de payload")
-
-	flag.Parse()
+func runRequests(clientset *kubernetes.Clientset, namespace string) {
+	sizeLarge := true
 
 	sizeType := 1
 
-	if *sizeLarge {
+	if sizeLarge {
 		sizeType = 2
 	}
 
-	config, err := clientcmd.BuildConfigFromFlags("", "/home/luiz/Documents/experimento-tcc/kubekeep/kubeconfig.yaml")
-	if err != nil {
-		log.Fatalf("Erro ao criar configuração do cliente Kubernetes: %v", err)
-	}
-
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Erro ao criar cliente Kubernetes: %v", err)
-	}
-
-	ipjavahttp, err := getLoadBalancerIP(clientset, "monitoring", "javahttptest-helm-chart")
+	ipjavahttp, err := getLoadBalancerIP(clientset, namespace, "javahttptest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
-	ipjavagrpc, err := getLoadBalancerIP(clientset, "monitoring", "javagrpctest-helm-chart")
+	ipjavagrpc, err := getLoadBalancerIP(clientset, namespace, "javagrpctest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
-	ipgohttp, err := getLoadBalancerIP(clientset, "monitoring", "gohttptest-helm-chart")
+	ipgohttp, err := getLoadBalancerIP(clientset, namespace, "gohttptest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
-	ipgogrpc, err := getLoadBalancerIP(clientset, "monitoring", "gogrpctest-helm-chart")
+	ipgogrpc, err := getLoadBalancerIP(clientset, namespace, "gogrpctest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
@@ -183,29 +148,9 @@ func main() {
 	grpcAddress1 := fmt.Sprintf("%s:50059", ipjavagrpc)
 	grpcAddress2 := fmt.Sprintf("%s:50001", ipgogrpc)
 
-	if *runAll {
-		fmt.Println("Testando todas as aplicações")
-		sendJavaHttpRequests(httpURL1, sizeType, numReqsJava)
-		sendGoHttpRequests(httpURL2, sizeType, numReqs)
-		sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
-		sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
-	} else {
-		if *httpFlag {
-			fmt.Println("Testando a aplicação Java HTTP")
-			sendJavaHttpRequests(httpURL1, sizeType, numReqsJava)
-		}
-		if *gohttpFlag {
-			fmt.Println("Testando a aplicação Go HTTP")
-			sendGoHttpRequests(httpURL2, sizeType, numReqs)
-		}
-		if *javagrpcFlag {
-			fmt.Println("Testando a aplicação Java gRPC")
-			sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
-		}
-		if *gogrpcFlag {
-			fmt.Println("Testando a aplicação Go gRPC")
-			sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
-		}
-	}	
+	fmt.Println("Testando todas as aplicações")
+	sendJavaHttpRequests(httpURL1, sizeType, numReqsJava)
+	sendGoHttpRequests(httpURL2, sizeType, numReqs)
+	sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
+	sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
 }
-
