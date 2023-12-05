@@ -20,7 +20,7 @@ const (
 	numReqs     = 350
 	numReqsJava = 1350
 	// numReqs     = 3
-	// numReqsJava = 3
+	// numReqsJava = 4
 )
 
 func getPayload(isHTTP bool, sizeType int) interface{} {

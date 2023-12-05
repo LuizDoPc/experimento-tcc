@@ -55,5 +55,5 @@ func runExperiment(experimentId int, size string) {
 
 func main() {
 	runExperiment(1, "small")
-	runExperiment(1, "big")
+	// runExperiment(1, "big")
 }
