@@ -8,7 +8,27 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func persistMetrics(idDaExecucao int, metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC []MetricValue) error {
+func createTableIfNotExists(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS experiments (
+			id INT NOT NULL AUTO_INCREMENT,
+			c VARCHAR(255) NOT NULL,
+			value FLOAT NOT NULL,
+			experiment_id INT NOT NULL,
+			app_name VARCHAR(255) NOT NULL,
+			request_size VARCHAR(255) NOT NULL,
+			PRIMARY KEY (id)
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Tabela verificada com sucesso.")
+	return nil
+}
+
+func persistMetrics(idDaExecucao int, requestSize string, metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC []MetricValue) error {
 	dbHost := "localhost:3306"
     dbUser := "admin"
     dbPassword := "123"
@@ -22,8 +42,9 @@ func persistMetrics(idDaExecucao int, metricsJavaHTTP, metricsGoHTTP, metricsJav
     }
     defer db.Close()
 	
+	createTableIfNotExists(db)
 
-    stmt, err := db.Prepare("INSERT INTO experiments(c, value, experiment_id, app_name) VALUES(?, ?, ?, ?)")
+    stmt, err := db.Prepare("INSERT INTO experiments(c, value, experiment_id, app_name, request_size) VALUES(?, ?, ?, ?, ?)")
     if err != nil {
         return err
     }
@@ -31,13 +52,15 @@ func persistMetrics(idDaExecucao int, metricsJavaHTTP, metricsGoHTTP, metricsJav
 
     insertMetrics := func(metrics []MetricValue, appName string) error {
         for _, metric := range metrics {
-            _, err := stmt.Exec(metric.CValue, metric.Value, idDaExecucao, appName)
+            _, err := stmt.Exec(metric.CValue, metric.Value, idDaExecucao, appName, requestSize)
             if err != nil {
                 return err
             }
         }
         return nil
     }
+
+	fmt.Println("Inserindo métricas no banco de dados...")
 
     if err := insertMetrics(metricsJavaHTTP, "javahttp"); err != nil {
         return err

@@ -9,8 +9,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func main() {	
-	experiment_id := 7
+func runExperiment(experimentId int, size string) {
 	manageKindCluster()
 
 	time.Sleep(20 * time.Second)
@@ -38,7 +37,7 @@ func main() {
 
 	time.Sleep(20 * time.Second)
 
-	runRequests(clientset, namespace)
+	runRequests(clientset, namespace, size)
 
 	fmt.Println("Finalizando as requests! Iniciando coleta de metricas...")
 
@@ -49,5 +48,12 @@ func main() {
 
 	fmt.Println("Metricas coletadas com sucesso! Iniciando persistencia...")
 
-	persistMetrics(experiment_id, metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC)
+	persistMetrics(experimentId, size, metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC)
+
+	fmt.Println("Finalizando experimento com sucesso! \n\n")
+}
+
+func main() {
+	runExperiment(1, "small")
+	runExperiment(1, "big")
 }

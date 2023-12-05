@@ -119,12 +119,10 @@ func sendGoGrpcRequests (address string, sizeType int, amount int) {
 	sendGRPCRequest(address, grpcPayload, interval, amount)
 }
 
-func runRequests(clientset *kubernetes.Clientset, namespace string) {
-	sizeLarge := true
-
+func runRequests(clientset *kubernetes.Clientset, namespace string, size string) {
 	sizeType := 1
 
-	if sizeLarge {
+	if size == "big" {
 		sizeType = 2
 	}
 
