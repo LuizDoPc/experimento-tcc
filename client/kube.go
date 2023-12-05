@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -56,20 +58,21 @@ func manageKindCluster() error {
 	return nil
 }
 
-func runHelmfileChartsTwice() error {
-	fmt.Println("Executando 'helmfile charts' pela primeira vez...")
-	firstRun := exec.Command("helmfile", "charts")
-	if err := firstRun.Run(); err != nil {
-		return fmt.Errorf("erro na primeira execução do helmfile charts: %w", err)
+func runHelmfileCharts(times int)  error {
+	parentDir := filepath.Join("..")
+
+	for i := 0; i < times; i++ {
+		fmt.Printf("Executando 'helmfile charts' no diretório pai (%s), iteração %d...\n", parentDir, i+1)
+		cmd := exec.Command("helmfile", "charts")
+		cmd.Dir = parentDir
+
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+
+		cmd.Run()
 	}
 
-	fmt.Println("Executando 'helmfile charts' pela segunda vez...")
-	secondRun := exec.Command("helmfile", "charts")
-	if err := secondRun.Run(); err != nil {
-		return fmt.Errorf("erro na segunda execução do helmfile charts: %w", err)
-	}
-
-	fmt.Println("Comandos 'helmfile charts' executados com sucesso.")
+	fmt.Println("Execução do comando 'helmfile charts' concluída.")
 	return nil
 }
 
@@ -86,4 +89,36 @@ func areAllPodsRunning(clientset *kubernetes.Clientset, namespace string) (bool,
 	}
 
 	return true, nil
+}
+
+func checkPodsLoop(clientset *kubernetes.Clientset, namespace string, checkInterval time.Duration) {
+	for {
+		running, err := areAllPodsRunning(clientset, namespace)
+		if err != nil {
+			fmt.Printf("Erro ao verificar os pods: %s\n", err)
+			break
+		}
+
+		if running {
+			fmt.Println("Todos os pods estão rodando!")
+			break
+		} else {
+			fmt.Println("Ainda há pods que não estão no estado 'Running', verificando novamente após o intervalo...")
+			time.Sleep(checkInterval)
+		}
+	}
+}
+
+func deleteGrafanaDeployment(clientset *kubernetes.Clientset, namespace string) error {
+	deploymentName := "kube-prometheus-stack-grafana"
+
+	deletePolicy := metav1.DeletePropagationForeground
+	if err := clientset.AppsV1().Deployments(namespace).Delete(context.TODO(), deploymentName, metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}); err != nil {
+		return fmt.Errorf("erro ao deletar o deployment do Grafana: %w", err)
+	}
+
+	fmt.Printf("Deployment '%s' no namespace '%s' solicitado para exclusão\n", deploymentName, namespace)
+	return nil
 }

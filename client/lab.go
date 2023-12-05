@@ -9,30 +9,20 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func checkPodsLoop(clientset *kubernetes.Clientset, namespace string, checkInterval time.Duration) {
-	for {
-		running, err := areAllPodsRunning(clientset, namespace)
-		if err != nil {
-			fmt.Printf("Erro ao verificar os pods: %s\n", err)
-			break
-		}
+func main() {	
+	experiment_id := 7
+	manageKindCluster()
 
-		if running {
-			fmt.Println("Todos os pods estão rodando!")
-			break
-		} else {
-			fmt.Println("Ainda há pods que não estão no estado 'Running', verificando novamente após o intervalo...")
-			time.Sleep(checkInterval)
-		}
-	}
-}
+	time.Sleep(20 * time.Second)
 
+	runHelmfileCharts(2)	
 
-func main() {
+	time.Sleep(20 * time.Second)
+
 	namespace := "monitoring"
 	checkInterval := 10 * time.Second
 
-	config, err := clientcmd.BuildConfigFromFlags("", "/home/luiz/Documents/experimento-tcc/kubekeep/kubeconfig.yaml")
+	config, err := clientcmd.BuildConfigFromFlags("", "./kubeconfig.yaml")
 	if err != nil {
 		log.Fatalf("Erro ao criar configuração do cliente Kubernetes: %v", err)
 	}
@@ -42,9 +32,22 @@ func main() {
 		log.Fatalf("Erro ao criar cliente Kubernetes: %v", err)
 	}
 
-	manageKindCluster()
-
-	runHelmfileChartsTwice()	
-
 	checkPodsLoop(clientset, namespace, checkInterval)	
+
+	deleteGrafanaDeployment(clientset, namespace)
+
+	time.Sleep(20 * time.Second)
+
+	runRequests(clientset, namespace)
+
+	fmt.Println("Finalizando as requests! Iniciando coleta de metricas...")
+
+	metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC, err := collectMetrics(clientset, namespace)
+    if err != nil {
+        log.Fatalf("Erro ao coletar métricas: %v", err)
+    }
+
+	fmt.Println("Metricas coletadas com sucesso! Iniciando persistencia...")
+
+	persistMetrics(experiment_id, metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC)
 }
