@@ -10,6 +10,7 @@ import (
 )
 
 func runExperiment(experimentId int, size string) {
+	fmt.Println("Iniciando experimento ", experimentId, " com tamanho ", size, "...")
 	manageKindCluster()
 
 	time.Sleep(20 * time.Second)
@@ -54,8 +55,8 @@ func runExperiment(experimentId int, size string) {
 }
 
 func main() {
-	runExperiment(1, "small")
-	runExperiment(1, "big")
-	runExperiment(2, "small")
-	runExperiment(2, "big")
+	for i := 1; i < 10; i++ {
+		runExperiment(i, "small")
+		runExperiment(i, "big")
+	}
 }
