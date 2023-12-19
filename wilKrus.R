@@ -25,13 +25,6 @@ dataBig <- filter(data, request_size=="big")
 dataSmall <- filter(data, request_size=="small")
 
 
-# testing data normality
-shapiro.test(javahttp$value)
-shapiro.test(javagrpc$value)
-shapiro.test(gohttp$value)
-shapiro.test(gogrpc$value)
-
-
 # testing differences between apps
 print(wilcox.test(javahttp$value, javagrpc$value, paired = TRUE))
 print(wilcox.test(javahttp$value, gohttp$value, paired = TRUE))
@@ -40,17 +33,30 @@ print(wilcox.test(javagrpc$value, gohttp$value, paired = TRUE))
 print(wilcox.test(javagrpc$value, gogrpc$value, paired = TRUE))
 print(wilcox.test(gohttp$value, gogrpc$value, paired = TRUE))
 
-aggregated_data <- dataBig %>%
-  group_by(experiment_id, app_name) %>%
-  summarise(mean_value = mean(value))
-kruskal_test <- kruskal.test(mean_value ~ app_name, data=aggregated_data)
-print(kruskal_test)
 
-
+# Friedman test
 data_wide <- dcast(dataBig, experiment_id ~ app_name, value.var = "value", fun.aggregate = mean)
 head(data_wide)
 data_friedman <- as.matrix(data_wide[, -1])
 print(friedman.test(data_friedman))
 
+
+# sqrt transformed model
+mod = lm(sqrt(value) ~ protocol + language + protocol:language, data = dataBig)
+
+# removing outliers
+res_scaled = abs(scale(mod$residuals))
+out = res_scaled > 3.5
+dados = dataBig[!out,] 
+
+# mean transformed model
+dados_mean = aggregate(value ~ language + protocol+experiment_id, FUN = mean, data = dados)
+mod = lm(value ~ protocol + language + protocol:language, data = dados_mean)
+
+# model diagnostics
+print(mod)
+shapiro.test(mod$residuals)
+hist(mod$residuals)
+anova(mod)
 
 hist(dataBig$value, main = "Histograma de Value", xlab = "Value", breaks = "Sturges")
