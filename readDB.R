@@ -37,7 +37,7 @@ aggregate(value ~ app_name + request_size, data = database, sd)
 
 
 graphic_data <- subset(database, request_size == "big")
-graphic_data <- subset(graphic_data, experiment_id == 1)
+# graphic_data <- subset(graphic_data, experiment_id == 1)
 
 summary <- graphic_data %>%
   group_by(app_name) %>%
@@ -64,3 +64,9 @@ box_plot <- ggplot(graphic_data_joined, aes(x=app_name, y=value)) +
 
 print(box_plot)
 
+
+x <- filter(database, request_size=="big", app_name=="javahttp", experiment_id==1)
+r <- filter(database, request_size=="big", app_name=="javagrpc", experiment_id==1)
+y = x$value
+s = r$value
+print(wilcox.test(y, s, paired = TRUE))
