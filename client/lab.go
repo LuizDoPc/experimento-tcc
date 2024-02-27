@@ -34,22 +34,13 @@ func runExperiment(experimentId int, size string) {
 
 	checkPodsLoop(clientset, namespace, checkInterval)	
 
-	deleteGrafanaDeployment(clientset, namespace)
-
 	time.Sleep(20 * time.Second)
 
-	runRequests(clientset, namespace, size)
+	metrics := runRequests(clientset, namespace, size)
 
-	fmt.Println("Finalizando as requests! Iniciando coleta de metricas...")
+	fmt.Println("Finalizando as requests! Iniciando persistência...")
 
-	metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC, err := collectMetrics(clientset, namespace)
-    if err != nil {
-        log.Fatalf("Erro ao coletar métricas: %v", err)
-    }
-
-	fmt.Println("Metricas coletadas com sucesso! Iniciando persistencia...")
-
-	persistMetrics(experimentId, size, metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC)
+	persistMetrics(experimentId, size, metrics)
 
 	fmt.Println("Finalizando experimento com sucesso! \n\n")
 }

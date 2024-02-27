@@ -108,17 +108,3 @@ func checkPodsLoop(clientset *kubernetes.Clientset, namespace string, checkInter
 		}
 	}
 }
-
-func deleteGrafanaDeployment(clientset *kubernetes.Clientset, namespace string) error {
-	deploymentName := "kube-prometheus-stack-grafana"
-
-	deletePolicy := metav1.DeletePropagationForeground
-	if err := clientset.AppsV1().Deployments(namespace).Delete(context.TODO(), deploymentName, metav1.DeleteOptions{
-		PropagationPolicy: &deletePolicy,
-	}); err != nil {
-		return fmt.Errorf("erro ao deletar o deployment do Grafana: %w", err)
-	}
-
-	fmt.Printf("Deployment '%s' no namespace '%s' solicitado para exclusão\n", deploymentName, namespace)
-	return nil
-}

@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"time"
 
 	pb "lab-client/protobuf"
@@ -61,9 +62,27 @@ func getPayload(isHTTP bool, sizeType int) interface{} {
 	return goArray
 }
 
-func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int) {
+type MetricValue struct {
+	CValue   string
+	Value    float64
+	AppName  string
+}
+
+var metrics = []MetricValue{}
+
+func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int, appName string) {
 	for i := 0; i < amount; i++ {
+
+		start := time.Now()
 		_, err := http.Post(url, "application/json", bytes.NewBuffer([]byte(payload)))
+		elapsed := time.Since(start)
+
+		metrics = append(metrics, MetricValue{
+			CValue: strconv.Itoa(i),
+			Value: elapsed.Seconds(),
+			AppName: appName,
+		})
+
 		if err != nil {
 			log.Fatalf("Erro na requisição HTTP POST: %v", err)
 		}
@@ -72,7 +91,7 @@ func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int
 	}
 }
 
-func sendGRPCRequest(address string, payload []int32, interval time.Duration, amount int) {
+func sendGRPCRequest(address string, payload []int32, interval time.Duration, amount int, appName string) {
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Erro ao conectar-se ao servidor gRPC: %v", err)
@@ -82,7 +101,17 @@ func sendGRPCRequest(address string, payload []int32, interval time.Duration, am
 	client := pb.NewArrayServiceClient(conn)
 
 	for i := 0; i < amount; i++ {
+
+		start := time.Now()
 		_, err := client.Search(context.Background(), &pb.Array{Array: payload})
+		elapsed := time.Since(start)
+
+		metrics = append(metrics, MetricValue{
+			CValue: strconv.Itoa(i),
+			Value: elapsed.Seconds(),
+			AppName: appName,
+		})
+
 		if err != nil {
 			log.Fatalf("Erro na requisição gRPC para %s: %v", address, err)
 		}
@@ -95,31 +124,31 @@ func sendJavaHttpRequests (url string, sizeType int, amount int) {
 	fmt.Printf("JAVA-HTTP - Enviando %d requisições HTTP POST para %s\n", amount, url)
 	httpPayload := getPayload(true, sizeType).(string)
 	interval := time.Second
-	sendHTTPPOSTRequest(url, httpPayload, interval, amount)
+	sendHTTPPOSTRequest(url, httpPayload, interval, amount, "javahttp")
 }
 
 func sendGoHttpRequests (url string, sizeType int, amount int) {
 	fmt.Printf("GO-HTTP - Enviando %d requisições HTTP POST para %s\n", amount, url)
 	httpPayload := getPayload(true, sizeType).(string)
 	interval := time.Second
-	sendHTTPPOSTRequest(url, httpPayload, interval, amount)
+	sendHTTPPOSTRequest(url, httpPayload, interval, amount, "gohttp")
 }
 
 func sendJavaGrpcRequests (address string, sizeType int, amount int) {
 	fmt.Printf("JAVA-GRPC - Enviando %d requisições gRPC para %s\n", amount, address)
 	grpcPayload := getPayload(false, sizeType).([]int32)
 	interval := time.Second
-	sendGRPCRequest(address, grpcPayload, interval, amount)
+	sendGRPCRequest(address, grpcPayload, interval, amount, "javagrpc")
 }
 
 func sendGoGrpcRequests (address string, sizeType int, amount int) {
 	fmt.Printf("GO-GRPC - Enviando %d requisições gRPC para %s\n", amount, address)
 	grpcPayload := getPayload(false, sizeType).([]int32)
 	interval := time.Second
-	sendGRPCRequest(address, grpcPayload, interval, amount)
+	sendGRPCRequest(address, grpcPayload, interval, amount, "gogrpc")
 }
 
-func runRequests(clientset *kubernetes.Clientset, namespace string, size string) {
+func runRequests(clientset *kubernetes.Clientset, namespace string, size string) []MetricValue {
 	sizeType := 1
 
 	if size == "big" {
@@ -153,4 +182,6 @@ func runRequests(clientset *kubernetes.Clientset, namespace string, size string)
 	sendGoHttpRequests(httpURL2, sizeType, numReqs)
 	sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
 	sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
+
+	return metrics
 }

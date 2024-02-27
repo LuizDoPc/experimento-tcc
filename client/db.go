@@ -28,7 +28,7 @@ func createTableIfNotExists(db *sql.DB) error {
 	return nil
 }
 
-func persistMetrics(idDaExecucao int, requestSize string, metricsJavaHTTP, metricsGoHTTP, metricsJavaGRPC, metricsGoGRPC []MetricValue) error {
+func persistMetrics(idDaExecucao int, requestSize string, metrics []MetricValue) error {
 	dbHost := "localhost:3306"
     dbUser := "admin"
     dbPassword := "123"
@@ -50,9 +50,9 @@ func persistMetrics(idDaExecucao int, requestSize string, metricsJavaHTTP, metri
     }
     defer stmt.Close()
 
-    insertMetrics := func(metrics []MetricValue, appName string) error {
+    insertMetrics := func(metrics []MetricValue) error {
         for _, metric := range metrics {
-            _, err := stmt.Exec(metric.CValue, metric.Value, idDaExecucao, appName, requestSize)
+            _, err := stmt.Exec(metric.CValue, metric.Value, idDaExecucao, metric.AppName, requestSize)
             if err != nil {
                 return err
             }
@@ -62,16 +62,7 @@ func persistMetrics(idDaExecucao int, requestSize string, metricsJavaHTTP, metri
 
 	fmt.Println("Inserindo métricas no banco de dados...")
 
-    if err := insertMetrics(metricsJavaHTTP, "javahttp"); err != nil {
-        return err
-    }
-    if err := insertMetrics(metricsGoHTTP, "gohttp"); err != nil {
-        return err
-    }
-    if err := insertMetrics(metricsJavaGRPC, "javagrpc"); err != nil {
-        return err
-    }
-    if err := insertMetrics(metricsGoGRPC, "gogrpc"); err != nil {
+    if err := insertMetrics(metrics); err != nil {
         return err
     }
 
