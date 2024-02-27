@@ -15,7 +15,6 @@ data$language <- as.factor(data$language)
 data$protocol <- as.factor(data$protocol)
 data$request_size <- as.factor(data$request_size)
 
-
 # data for tests
 javahttp <- filter(database, request_size=="big", app_name=="javahttp", experiment_id==7)
 javagrpc <- filter(database, request_size=="big", app_name=="javagrpc", experiment_id==7)
@@ -25,13 +24,19 @@ dataBig <- filter(data, request_size=="big")
 dataSmall <- filter(data, request_size=="small")
 
 
+hist(javahttp$value, breaks = "Sturges")
+qqnorm(javahttp$value)
+qqline(javahttp$value)
+shapiro.test(javahttp$value)
+
+
 # testing differences between apps
-print(wilcox.test(javahttp$value, javagrpc$value, paired = TRUE))
-print(wilcox.test(javahttp$value, gohttp$value, paired = TRUE))
-print(wilcox.test(javahttp$value, gogrpc$value, paired = TRUE))
-print(wilcox.test(javagrpc$value, gohttp$value, paired = TRUE))
-print(wilcox.test(javagrpc$value, gogrpc$value, paired = TRUE))
-print(wilcox.test(gohttp$value, gogrpc$value, paired = TRUE))
+print(wilcox.test(javahttp$value, javagrpc$value, paired = FALSE))
+print(wilcox.test(javahttp$value, gohttp$value, paired = FALSE))
+print(wilcox.test(javahttp$value, gogrpc$value, paired = FALSE))
+print(wilcox.test(javagrpc$value, gohttp$value, paired = FALSE))
+print(wilcox.test(javagrpc$value, gogrpc$value, paired = FALSE))
+print(wilcox.test(gohttp$value, gogrpc$value, paired = FALSE))
 
 
 # Friedman test
@@ -43,6 +48,12 @@ print(friedman.test(data_friedman))
 
 # sqrt transformed model
 mod = lm(sqrt(value) ~ protocol + language + protocol:language, data = dataBig)
+
+kruskal.test(value ~ protocol, data = dataBig)
+kruskal.test(value ~ language, data = dataBig)
+dataBig$combined_factor <- interaction(dataBig$protocol, dataBig$language)
+kruskal.test(value ~ combined_factor, data = dataBig)
+
 
 # removing outliers
 res_scaled = abs(scale(mod$residuals))
