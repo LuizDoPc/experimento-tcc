@@ -36,6 +36,10 @@ func runExperiment(experimentId int, size string) {
 
 	time.Sleep(20 * time.Second)
 
+	runHelmfileCharts(2)	
+
+	time.Sleep(20 * time.Second)
+
 	metrics := runRequests(clientset, namespace, size)
 
 	fmt.Println("Finalizando as requests! Iniciando persistência...")

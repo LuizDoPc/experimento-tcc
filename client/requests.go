@@ -77,16 +77,19 @@ func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int
 		_, err := http.Post(url, "application/json", bytes.NewBuffer([]byte(payload)))
 		elapsed := time.Since(start)
 
-		metrics = append(metrics, MetricValue{
-			CValue: strconv.Itoa(i),
-			Value: elapsed.Seconds(),
-			AppName: appName,
-		})
+		if appName != "javahttp" || i >= 1000{
+			fmt.Printf("Registrando metrica de requisicao")
+			metrics = append(metrics, MetricValue{
+				CValue: strconv.Itoa(i),
+				Value: elapsed.Seconds(),
+				AppName: appName,
+			})
+		}
 
 		if err != nil {
 			log.Fatalf("Erro na requisição HTTP POST: %v", err)
 		}
-		// fmt.Printf("Requisição HTTP POST para %s número %d\n", url, i+1)
+		fmt.Printf("Requisição HTTP POST para %s número %d\n", url, i+1)
 		time.Sleep(interval)
 	}
 }
@@ -106,16 +109,19 @@ func sendGRPCRequest(address string, payload []int32, interval time.Duration, am
 		_, err := client.Search(context.Background(), &pb.Array{Array: payload})
 		elapsed := time.Since(start)
 
-		metrics = append(metrics, MetricValue{
-			CValue: strconv.Itoa(i),
-			Value: elapsed.Seconds(),
-			AppName: appName,
-		})
+		if appName != "javagrpc" || i >= 1000{
+			fmt.Printf("Registrando metrica de requisicao")
+			metrics = append(metrics, MetricValue{
+				CValue: strconv.Itoa(i),
+				Value: elapsed.Seconds(),
+				AppName: appName,
+			})
+		}
 
 		if err != nil {
 			log.Fatalf("Erro na requisição gRPC para %s: %v", address, err)
 		}
-		// fmt.Printf("Requisição gRPC para %s número %d\n", address, i+1)
+		fmt.Printf("Requisição gRPC para %s número %d\n", address, i+1)
 		time.Sleep(interval)
 	}
 }
