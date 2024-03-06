@@ -77,7 +77,7 @@ func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int
 		_, err := http.Post(url, "application/json", bytes.NewBuffer([]byte(payload)))
 		elapsed := time.Since(start)
 
-		if appName != "javahttp" || i >= 1000{
+		if appName != "javahttp" || i >= 1000 {
 			fmt.Printf("Registrando metrica de requisicao")
 			metrics = append(metrics, MetricValue{
 				CValue: strconv.Itoa(i),
@@ -109,14 +109,14 @@ func sendGRPCRequest(address string, payload []int32, interval time.Duration, am
 		_, err := client.Search(context.Background(), &pb.Array{Array: payload})
 		elapsed := time.Since(start)
 
-		if appName != "javagrpc" || i >= 1000{
+		if appName != "javagrpc" || i >= 1000 {
 			fmt.Printf("Registrando metrica de requisicao")
 			metrics = append(metrics, MetricValue{
 				CValue: strconv.Itoa(i),
 				Value: elapsed.Seconds(),
 				AppName: appName,
 			})
-		}
+		 }
 
 		if err != nil {
 			log.Fatalf("Erro na requisição gRPC para %s: %v", address, err)
@@ -189,5 +189,9 @@ func runRequests(clientset *kubernetes.Clientset, namespace string, size string)
 	sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
 	sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
 
-	return metrics
+	tempMetrics := metrics
+
+	metrics = []MetricValue{}
+
+	return tempMetrics
 }
