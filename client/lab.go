@@ -50,8 +50,8 @@ func runExperiment(experimentId int, size string) {
 }
 
 func main() {
-	for i := 1; i < 10; i++ {
-		runExperiment(i, "small")
-		runExperiment(i, "big")
-	}
+//	for i := 1; i < 10; i++ {
+		runExperiment(6, "small")
+		runExperiment(6, "big")
+//	}
 }
