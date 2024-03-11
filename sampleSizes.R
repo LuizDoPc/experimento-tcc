@@ -1,9 +1,13 @@
 library(tidyverse)
 library(readr)
-database <- read_csv("dados/experimento1.csv")
+database <- read_csv("dados/experimento2.csv")
 
 
-exp1 <- filter(database, request_size=="small", experiment_id==7)
+# experiments small 2, 3, 4, 5
+# experiments big 1, 3, 4, 5, 6
+expSmall <- filter(database, request_size=="small", experiment_id==2 | experiment_id==3 | experiment_id==4 | experiment_id==5)
+expBig <- filter(database, request_size=="big", experiment_id==1 | experiment_id==3 | experiment_id==4 | experiment_id==5 | experiment_id==6)
+exp1 <- expBig
 javahttp <- filter(exp1, app_name=="javahttp")[1:10,]
 javagrpc <- filter(exp1, app_name=="javagrpc")[1:10,]
 gohttp <- filter(exp1, app_name=="gohttp")[1:10,]
@@ -45,9 +49,3 @@ print(szgohttp)
 print(xgogrpc)
 print(sgogrpc)
 print(szgogrpc)
-
-
-
-
-
-
