@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	numReqs     = 350
-	numReqsJava = 1350
+	numReqs     = 31
+	numReqsJava = 1031
 	// numReqs     = 3
 	// numReqsJava = 4
 )

@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"time"
+	"io"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -26,32 +27,51 @@ func getLoadBalancerIP(clientset *kubernetes.Clientset, namespace, serviceName s
 	return "", fmt.Errorf("IP do LoadBalancer não encontrado")
 }
 
-func manageKindCluster() error {
-	fmt.Println("Deletando o cluster Kind existente, se houver...")
-	deleteCmd := exec.Command("kind", "delete", "cluster")
-	if err := deleteCmd.Run(); err != nil {
-		return fmt.Errorf("falha ao deletar o cluster Kind: %w", err)
+func copyFile(src, dest string) error {
+	in, err := os.Open(src)
+	if err != nil{
+		return err
 	}
+	defer in.Close()
 
-	fmt.Println("Criando um novo cluster Kind...")
-	createCmd := exec.Command("kind", "create", "cluster")
-	if err := createCmd.Run(); err != nil {
-		return fmt.Errorf("falha ao criar o cluster Kind: %w", err)
+	out, err := os.Create(dest)
+	if err != nil{
+		return err
 	}
+	defer out.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil{
+		return err
+	}
+	
+	return out.Close()
+}
+
+func manageKindCluster() error {
+//	fmt.Println("Deletando o cluster minikube existente, se houver...")
+//	deleteCmd := exec.Command("minikube", "delete")
+//	if err := deleteCmd.Run(); err != nil {
+//		return fmt.Errorf("falha ao deletar o cluster Kind: %w", err)
+//	}
+//
+//	fmt.Println("Criando um novo cluster minikube...")
+//	createCmd := exec.Command("minikube", "start", "--driver=kvm2", "--cpus=8", "--memory=14000")
+//	
+//	if err := createCmd.Run(); err != nil {
+//		fmt.Println(err)
+//		return fmt.Errorf("falha ao criar o cluster minikube: %w", err)
+//	}
 
 	kubeconfigPath := filepath.Join(".", "kubeconfig.yaml")
 	fmt.Printf("Salvando kubeconfig em: %s\n", kubeconfigPath)
 
-	saveCmd := exec.Command("kind", "get", "kubeconfig")
-	outFile, err := os.Create(kubeconfigPath)
-	if err != nil {
-		return fmt.Errorf("falha ao criar o arquivo kubeconfig: %w", err)
-	}
-	defer outFile.Close()
+	defaultKubeConfigPath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 
-	saveCmd.Stdout = outFile
-	if err := saveCmd.Run(); err != nil {
-		return fmt.Errorf("falha ao salvar o kubeconfig: %w", err)
+	err := copyFile(defaultKubeConfigPath , kubeconfigPath)
+	if err != nil {
+		fmt.Println(err) 
+		return fmt.Errorf("falha ao copiar o kubeconfig: %w", err)
 	}
 
 	fmt.Println("Cluster Kind criado e kubeconfig salvo com sucesso.")
