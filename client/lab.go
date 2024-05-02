@@ -2,45 +2,44 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"time"
-
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
+	// "log"
+	// "time"
+	// "k8s.io/client-go/kubernetes"
+	// "k8s.io/client-go/tools/clientcmd"
 )
 
 func runExperiment(experimentId int, size string) {
 	fmt.Println("Iniciando experimento ", experimentId, " com tamanho ", size, "...")
-	manageKindCluster()
+	// manageKindCluster()
 
-	time.Sleep(20 * time.Second)
+	// time.Sleep(20 * time.Second)
 
-	runHelmfileCharts(2)	
+	// runHelmfileCharts(2)	
 
-	time.Sleep(20 * time.Second)
+	// time.Sleep(20 * time.Second)
 
 	namespace := "monitoring"
-	checkInterval := 10 * time.Second
+	// checkInterval := 10 * time.Second
 
-	config, err := clientcmd.BuildConfigFromFlags("", "./kubeconfig.yaml")
-	if err != nil {
-		log.Fatalf("Erro ao criar configuração do cliente Kubernetes: %v", err)
-	}
+	// config, err := clientcmd.BuildConfigFromFlags("", "./kubeconfig.yaml")
+	// if err != nil {
+	// 	log.Fatalf("Erro ao criar configuração do cliente Kubernetes: %v", err)
+	// }
 
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Erro ao criar cliente Kubernetes: %v", err)
-	}
+	// clientset, err := kubernetes.NewForConfig(config)
+	// if err != nil {
+	// 	log.Fatalf("Erro ao criar cliente Kubernetes: %v", err)
+	// }
 
-	checkPodsLoop(clientset, namespace, checkInterval)	
+	// checkPodsLoop(clientset, namespace, checkInterval)	
 
-	time.Sleep(20 * time.Second)
+	// time.Sleep(20 * time.Second)
 
-	runHelmfileCharts(2)	
+	// runHelmfileCharts(2)	
 
-	time.Sleep(20 * time.Second)
+	// time.Sleep(20 * time.Second)
 
-	metrics := runRequests(clientset, namespace, size)
+	metrics := runRequests(namespace, size)
 
 	fmt.Println("Finalizando as requests! Iniciando persistência...")
 

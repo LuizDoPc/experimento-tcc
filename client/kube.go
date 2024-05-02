@@ -4,27 +4,45 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
-	"io"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
 
-func getLoadBalancerIP(clientset *kubernetes.Clientset, namespace, serviceName string) (string, error) {
-	service, err := clientset.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
-	if err != nil {
-		return "", err
+func getLoadBalancerIP(namespace, serviceName string) (string, error) {
+	// service, err := clientset.CoreV1().Services(namespace).Get(context.TODO(), serviceName, metav1.GetOptions{})
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// if len(service.Status.LoadBalancer.Ingress) > 0 {
+	// 	return service.Status.LoadBalancer.Ingress[0].IP, nil
+	// }
+
+	// return "", fmt.Errorf("IP do LoadBalancer não encontrado")
+
+	if serviceName == "javahttptest-helm-chart" {
+		return "localhost:8080", nil
 	}
 
-	if len(service.Status.LoadBalancer.Ingress) > 0 {
-		return service.Status.LoadBalancer.Ingress[0].IP, nil
+	if serviceName == "javagrpctest-helm-chart" {
+		return "localhost", nil
 	}
 
-	return "", fmt.Errorf("IP do LoadBalancer não encontrado")
+	if serviceName == "gohttptest-helm-chart" {
+		return "localhost", nil
+	}
+
+	if serviceName == "gogrpctest-helm-chart" {
+		return "localhost", nil
+	}
+
+	return "", nil
 }
 
 func copyFile(src, dest string) error {

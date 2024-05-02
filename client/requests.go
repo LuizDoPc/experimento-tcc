@@ -14,7 +14,6 @@ import (
 	pb "lab-client/protobuf"
 
 	"google.golang.org/grpc"
-	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -154,26 +153,26 @@ func sendGoGrpcRequests (address string, sizeType int, amount int) {
 	sendGRPCRequest(address, grpcPayload, interval, amount, "gogrpc")
 }
 
-func runRequests(clientset *kubernetes.Clientset, namespace string, size string) []MetricValue {
+func runRequests(namespace string, size string) []MetricValue {
 	sizeType := 1
 
 	if size == "big" {
 		sizeType = 2
 	}
 
-	ipjavahttp, err := getLoadBalancerIP(clientset, namespace, "javahttptest-helm-chart")
+	ipjavahttp, err := getLoadBalancerIP(namespace, "javahttptest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
-	ipjavagrpc, err := getLoadBalancerIP(clientset, namespace, "javagrpctest-helm-chart")
+	ipjavagrpc, err := getLoadBalancerIP(namespace, "javagrpctest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
-	ipgohttp, err := getLoadBalancerIP(clientset, namespace, "gohttptest-helm-chart")
+	ipgohttp, err := getLoadBalancerIP(namespace, "gohttptest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
-	ipgogrpc, err := getLoadBalancerIP(clientset, namespace, "gogrpctest-helm-chart")
+	ipgogrpc, err := getLoadBalancerIP(namespace, "gogrpctest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
 	}
