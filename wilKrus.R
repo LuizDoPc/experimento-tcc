@@ -20,15 +20,16 @@ javahttp <- filter(database, request_size=="big", app_name=="javahttp")
 javagrpc <- filter(database, request_size=="big", app_name=="javagrpc")
 gohttp <- filter(database, request_size=="big", app_name=="gohttp")
 gogrpc <- filter(database, request_size=="big", app_name=="gogrpc")
-dataBig <- filter(data, request_size=="big",  experiment_id==1 | experiment_id==3 | experiment_id==4 | experiment_id==5 | experiment_id==6)
+
+dataBig <- filter(data, request_size=="big")
 dataSmall <- filter(data, request_size=="small")
+set.seed(7)
+sampled_data <- sample_n(javagrpc, size = 140)
 
 #testing normality
-hist(javahttp$value, breaks = "Sturges")
-qqnorm(javahttp$value)
-qqline(javahttp$value)
-shapiro.test(javahttp$value)
-
+hist(sampled_data$value, breaks = "Sturges")
+qqnorm(sampled_data$value)
+qqline(sampled_data$value)
 
 # testing differences between apps
 print(wilcox.test(javahttp$value, javagrpc$value, paired = FALSE))
@@ -49,15 +50,17 @@ kruskal.test(value ~ combined_factor, data = dataBig)
 #out = res_scaled > 3.5
 #dados = dataBig[!out,] 
 
-# sqrt transformed model
-mod = lm(log(value +1) ~ protocol + language + protocol:language, data = dataSmall)
+# ???? transformation
+sampled_data = sample_n(dataSmall, size = 5000)
+mod = lm(log(value + 1) ~ protocol + language + protocol:language, data = sampled_data)
 hist(mod$residuals)
 qqnorm(mod$residuals)
 qqline(mod$residuals)
 print(mod)
+shapiro.test(mod$residuals)
 
 # mean transformed model
-dados_mean = aggregate(value ~ language + protocol+experiment_id, FUN = median, data = dataBig)
+dados_mean = aggregate(value ~ language + protocol+experiment_id, FUN = median, data = dataSmall)
 mod = lm(value ~ protocol + language + protocol:language, data = dados_mean)
 
 # model diagnostics

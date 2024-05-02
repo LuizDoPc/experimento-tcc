@@ -1,9 +1,9 @@
 library(tidyverse)
 library(readr)
-database <- read_csv("dados/experimento2.csv")
+database <- read_csv("dados/experimento1.csv")
 
-expSmall <- filter(database, request_size=="small", experiment_id==2 | experiment_id==3 | experiment_id==4 | experiment_id==5)
-expBig <- filter(database, request_size=="big", experiment_id==1 | experiment_id==3 | experiment_id==4 | experiment_id==5 | experiment_id==6)
+expSmall <- filter(database, request_size=="small")
+expBig <- filter(database, request_size=="big")
 exp1 <- expBig
 
 javahttp <- filter(exp1, app_name=="javahttp")
@@ -35,10 +35,10 @@ remover_outliers <- function(dados, campo) {
 #gogrpc <- remover_outliers(gogrpc, "value")
 
 # data transformation for time measures
-javahttp$value <- sqrt(javahttp$value)
-javagrpc$value <- sqrt(javagrpc$value)
-gohttp$value <- sqrt(gohttp$value)
-gogrpc$value <- sqrt(gogrpc$value)
+javahttp$value <- log(javahttp$value + 1)
+javagrpc$value <- log(javagrpc$value + 1)
+gohttp$value <- log(gohttp$value + 1)
+gogrpc$value <- log(gogrpc$value + 1)
 
 # test data normality with histogram and shapiro test
 
@@ -62,3 +62,10 @@ shapiro.test(javagrpc$value)
 shapiro.test(gohttp$value)
 shapiro.test(gogrpc$value)
 
+
+ggplot(javagrpc, aes(x=c, y=value)) +
+  geom_col() +
+  theme_minimal() +
+  labs(title="Gráfico de Colunas das Requisições",
+       x="Número da Requisição",
+       y="Valor da Requisição")
