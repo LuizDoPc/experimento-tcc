@@ -163,6 +163,7 @@ func (mc *ManagedCommand) Start(command string, args ...string) error {
 	mc.Cmd = exec.Command("nice", append([]string{"-n", "-20", command}, args...)...)
 
 	if err := mc.Cmd.Start(); err != nil {
+		fmt.Println(err)
 		return fmt.Errorf("falha ao iniciar o comando: %w", err)
 	}
 	return nil
@@ -238,6 +239,22 @@ func runRequests(namespace string, size string) []MetricValue {
 
 	fmt.Println("Testando todas as aplicações")
 
+	javaGrpcPath := "../java-grpc/target/java-grpc-0.0.1-SNAPSHOT.jar"
+	javagrpc, err := createJavaApp(javaGrpcPath)
+	if err != nil {
+		fmt.Println(err)
+		log.Fatalf("Erro ao criar aplicação Java: %v", err)
+	}
+	sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
+	javagrpc.Stop()
+	
+	goGrpcPath := "../go-grpc/api/api"
+	gogrpc, err := createGoApp(goGrpcPath)
+	if err != nil {
+		log.Fatalf("Erro ao criar aplicação Go: %v", err)
+	}
+	sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
+	gogrpc.Stop()
 
 	javaHttpPath := "../java-http/target/java-http-0.0.1-SNAPSHOT.jar"
 	javahttp, err := createJavaApp(javaHttpPath)
@@ -254,22 +271,6 @@ func runRequests(namespace string, size string) []MetricValue {
 	}
 	sendGoHttpRequests(httpURL2, sizeType, numReqs)
 	gohttp.Stop()
-
-	javaGrpcPath := "../java-grpc/target/java-grpc-0.0.1-SNAPSHOT.jar"
-	javagrpc, err := createJavaApp(javaGrpcPath)
-	if err != nil {
-		log.Fatalf("Erro ao criar aplicação Java: %v", err)
-	}
-	sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
-	javagrpc.Stop()
-
-	goGrpcPath := "../go-grpc/api/api"
-	gogrpc, err := createGoApp(goGrpcPath)
-	if err != nil {
-		log.Fatalf("Erro ao criar aplicação Go: %v", err)
-	}
-	sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
-	gogrpc.Stop()
 
 	tempMetrics := metrics
 
