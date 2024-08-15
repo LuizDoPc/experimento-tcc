@@ -14,7 +14,7 @@ data$language <- as.factor(data$language)
 data$protocol <- as.factor(data$protocol)
 data$request_size <- as.factor(data$request_size)
 
-size <- "big"
+size <- "small"
 javahttp <- filter(data, request_size==size, app_name=="javahttp")
 javagrpc <- filter(data, request_size==size, app_name=="javagrpc")
 gohttp <- filter(data, request_size==size, app_name=="gohttp")
@@ -57,6 +57,26 @@ mean_javagrpc <- mean(javagrpc$value)
 mean_gohttp <- mean(gohttp$value)
 mean_gogrpc <- mean(gogrpc$value)
 
+median_javahttp <- median(javahttp$value)
+median_javagrpc <- median(javagrpc$value)
+median_gohttp <- median(gohttp$value)
+median_gogrpc <- median(gogrpc$value)
+
+stddev_javahttp <- sd(javahttp$value)
+stddev_javagrpc <- sd(javagrpc$value)
+stddev_gohttp <- sd(gohttp$value)
+stddev_gogrpc <- sd(gogrpc$value)
+
+mean_javahttp
+mean_javagrpc
+mean_gohttp
+mean_gogrpc
+
+stddev_javahttp
+stddev_javagrpc
+stddev_gohttp
+stddev_gogrpc
+
 ggplot(gohttp, aes(x=as.factor(id), y=value)) +
   geom_bar(stat="identity") +
   theme_minimal() +
@@ -65,5 +85,9 @@ ggplot(gohttp, aes(x=as.factor(id), y=value)) +
        y="Valor da Requisição")
 
 
-boxplot(value ~ app_name, data = data_joined, col = "lightblue", main = "Boxplot das Requisições",
-        xlab = "Aplicação", ylab = "Valor da Requisição")
+data_joined$app_name <- factor(data_joined$app_name,
+                               levels = c("gogrpc", "gohttp", "javagrpc", "javahttp"),
+                               labels = c("(Go,gRPC)", "(Go,REST)", "(Java,gRPC)", "(Java,REST)"))
+
+boxplot(value ~ app_name, data = data_joined, col = "lightblue", main = "",
+        xlab = "Aplicação", ylab = "Duração da Requisição")

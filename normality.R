@@ -4,7 +4,7 @@ database <- read_csv("dados/experimento6.csv")
 
 expSmall <- filter(database, request_size=="small")
 expBig <- filter(database, request_size=="big")
-exp1 <- expSmall
+exp1 <- expBig
 
 javahttp <- filter(exp1, app_name=="javahttp")
 javagrpc <- filter(exp1, app_name=="javagrpc")
@@ -42,10 +42,12 @@ gogrpc$value <- log(gogrpc$value + 1)
 
 # test data normality with histogram and shapiro test
 
-hist(javahttp$value, breaks="Sturges")
-hist(javagrpc$value, breaks="Sturges")
-hist(gohttp$value, breaks="Sturges")
-hist(gogrpc$value, breaks="Sturges")
+par(mfrow=c(2,2))
+hist(javahttp$value, breaks="Sturges", main="Java REST")
+hist(javagrpc$value, breaks="Sturges", main="Java gRPC")
+hist(gohttp$value, breaks="Sturges", main="Go REST")
+hist(gogrpc$value, breaks="Sturges", main="Go gRPC")
+
 
 qqnorm(javahttp$value)
 qqline(javahttp$value)

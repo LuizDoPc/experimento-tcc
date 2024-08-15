@@ -2,8 +2,8 @@ library(tidyverse)
 library(readr)
 database <- read_csv("dados/experimento6.csv")
 
-expSmall <- filter(database, request_size=="small", experiment_id==2)
-expBig <- filter(database, request_size=="big", experiment_id==2)
+expSmall <- filter(database, request_size=="small")
+expBig <- filter(database, request_size=="big")
 exp1 <- expSmall 
 javahttp <- filter(exp1, app_name=="javahttp")
 javagrpc <- filter(exp1, app_name=="javagrpc")

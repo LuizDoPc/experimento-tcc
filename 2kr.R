@@ -109,3 +109,13 @@ boxplot(value ~ app_name, data = data_filtered, col = "lightblue", main = "Boxpl
 
 
 
+sum_effect
+effectLang
+effectProt
+effectInt
+
+langInfluence
+protInfluence
+intInfluence
+errorInfluence
+
