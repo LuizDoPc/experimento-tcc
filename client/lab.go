@@ -8,49 +8,36 @@ import (
 	// "k8s.io/client-go/tools/clientcmd"
 )
 
-func runExperiment(experimentId int, size string) {
-	fmt.Println("Iniciando experimento ", experimentId, " com tamanho ", size, "...")
-	// manageKindCluster()
-
-	// time.Sleep(20 * time.Second)
-
-	// runHelmfileCharts(2)	
-
-	// time.Sleep(20 * time.Second)
+func runExperiment(experimentId int, payloadSize int) {
+	fmt.Printf("Iniciando experimento %d com payload de %d números...\n", experimentId, payloadSize)
 
 	namespace := "monitoring"
-	// checkInterval := 10 * time.Second
 
-	// config, err := clientcmd.BuildConfigFromFlags("", "./kubeconfig.yaml")
-	// if err != nil {
-	// 	log.Fatalf("Erro ao criar configuração do cliente Kubernetes: %v", err)
-	// }
-
-	// clientset, err := kubernetes.NewForConfig(config)
-	// if err != nil {
-	// 	log.Fatalf("Erro ao criar cliente Kubernetes: %v", err)
-	// }
-
-	// checkPodsLoop(clientset, namespace, checkInterval)	
-
-	// time.Sleep(20 * time.Second)
-
-	// runHelmfileCharts(2)	
-
-	// time.Sleep(20 * time.Second)
-
-	metrics := runRequests(namespace, size)
+	metrics := runRequests(namespace, payloadSize)
 
 	fmt.Println("Finalizando as requests! Iniciando persistência...")
 
-	persistMetrics(experimentId, size, metrics)
+	payloadSizeStr := fmt.Sprintf("%d", payloadSize)
+	persistMetrics(experimentId, payloadSizeStr, metrics)
 
 	fmt.Println("Finalizando experimento com sucesso! \n\n")
 }
 
+func runExperimentBatch(experimentIdStart int, payloadSizes []int, runsPerSize int) {
+	currentExperimentId := experimentIdStart
+	
+	for _, payloadSize := range payloadSizes {
+		for run := 1; run <= runsPerSize; run++ {
+			runExperiment(currentExperimentId, payloadSize)
+			currentExperimentId++
+		}
+	}
+	
+	fmt.Printf("Concluído: %d experimentos executados\n", currentExperimentId-experimentIdStart)
+}
+
 func main() {
-//	for i := 1; i < 10; i++ {
-//		runExperiment(6, "small")
-		runExperiment(1, "big")
-//	}
+	payloadSizesPhase1 := []int{200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 204800}
+	
+	runExperimentBatch(1, payloadSizesPhase1, 5)
 }

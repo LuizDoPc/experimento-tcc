@@ -8,7 +8,7 @@ volumes:
   prometheus_data:
    
 services:
-  java-http:
+  java-grpc:
     image: luizdopc/java-grpc:v0.3
     container_name: java-grpc
     ports:

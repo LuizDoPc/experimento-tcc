@@ -17,7 +17,10 @@ func createTableIfNotExists(db *sql.DB) error {
 			experiment_id INT NOT NULL,
 			app_name VARCHAR(255) NOT NULL,
 			request_size VARCHAR(255) NOT NULL,
-			PRIMARY KEY (id)
+			PRIMARY KEY (id),
+			INDEX idx_experiment_id (experiment_id),
+			INDEX idx_app_name (app_name),
+			INDEX idx_request_size (request_size)
 		);
 	`)
 	if err != nil {
