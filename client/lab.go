@@ -38,6 +38,7 @@ func runExperimentBatch(experimentIdStart int, payloadSizes []int, runsPerSize i
 
 func main() {
 	payloadSizesPhase1 := []int{200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 204800}
+	// payloadSizesPhase1 := []int{200, 500}
 	
 	runExperimentBatch(1, payloadSizesPhase1, 5)
 }
