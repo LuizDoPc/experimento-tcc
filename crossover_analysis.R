@@ -1,8 +1,19 @@
 library(tidyverse)
 library(readr)
-library(lme4)
+library(reshape2)
+library(stats)
+library(mgcv)
 
-database <- read_csv("dados/experimento_all_sizes.csv")
+database <- read_csv("dados/ebp_1.csv",
+                     col_names = c("id", "c", "value", "experiment_id", "app_name", "request_size"),
+                     col_types = cols(
+                       id = col_integer(),
+                       c = col_integer(),
+                       value = col_double(),
+                       experiment_id = col_integer(),
+                       app_name = col_character(),
+                       request_size = col_character()
+                     ))
 
 data <- database %>%
   mutate(
@@ -13,6 +24,7 @@ data <- database %>%
 
 data$language <- as.factor(data$language)
 data$protocol <- as.factor(data$protocol)
+data$request_size <- as.factor(data$request_size)
 
 remover_outliers <- function(dados, campo) {
   Q1 <- quantile(dados[[campo]], 0.25, na.rm = TRUE)
@@ -27,190 +39,497 @@ remover_outliers <- function(dados, campo) {
   return(dados_filtrados)
 }
 
-analyzeCrossover <- function(data, lang) {
-  cat(sprintf("\n=== Crossover Analysis: %s ===\n", lang))
+payload_sizes <- sort(unique(data$payload_size))
+
+cat("=== Analyzing", length(payload_sizes), "payload sizes ===\n")
+cat("Payload sizes:", paste(payload_sizes, collapse = ", "), "\n\n")
+
+for (ps in payload_sizes) {
+  cat("\n", rep("=", 60), "\n")
+  cat("PAYLOAD SIZE:", ps, "\n")
+  cat(rep("=", 60), "\n\n")
   
-  data_filtered <- data %>%
-    filter(language == lang) %>%
-    remover_outliers("value")
+  data_ps <- filter(data, payload_size == ps)
   
-  data_filtered$payload_size_centered <- data_filtered$payload_size - mean(data_filtered$payload_size, na.rm = TRUE)
+  javahttp <- filter(data_ps, app_name == "javahttp")
+  javagrpc <- filter(data_ps, app_name == "javagrpc")
+  gohttp <- filter(data_ps, app_name == "gohttp")
+  gogrpc <- filter(data_ps, app_name == "gogrpc")
   
-  cat("\n--- Linear Model with Interaction ---\n")
+  javahttp <- remover_outliers(javahttp, "value")
+  javagrpc <- remover_outliers(javagrpc, "value")
+  gohttp <- remover_outliers(gohttp, "value")
+  gogrpc <- remover_outliers(gogrpc, "value")
   
-  model_interaction <- lm(value ~ protocol * payload_size_centered, 
-                         data = data_filtered)
+  data_filtered <- bind_rows(javahttp, javagrpc, gohttp, gogrpc)
   
-  cat("Model summary:\n")
-  print(summary(model_interaction))
-  
-  intercept_http <- coef(model_interaction)["(Intercept)"]
-  intercept_grpc <- coef(model_interaction)["(Intercept)"] + coef(model_interaction)["protocolgrpc"]
-  slope_http <- coef(model_interaction)["payload_size_centered"]
-  slope_grpc <- coef(model_interaction)["payload_size_centered"] + coef(model_interaction)["protocolgrpc:payload_size_centered"]
-  
-  cat("\n--- Protocol-specific parameters ---\n")
-  cat(sprintf("HTTP - Intercept: %.6f, Slope: %.9f\n", intercept_http, slope_http))
-  cat(sprintf("gRPC - Intercept: %.6f, Slope: %.9f\n", intercept_grpc, slope_grpc))
-  
-  if (abs(slope_http - slope_grpc) > 1e-10) {
-    crossover_point_centered <- (intercept_grpc - intercept_http) / (slope_http - slope_grpc)
-    crossover_point <- crossover_point_centered + mean(data_filtered$payload_size, na.rm = TRUE)
-    
-    cat(sprintf("\nCrossover point (centered): %.2f\n", crossover_point_centered))
-    cat(sprintf("Crossover point (actual): %.0f integers\n", crossover_point))
-    
-    vcov_matrix <- vcov(model_interaction)
-    
-    intercept_diff <- intercept_grpc - intercept_http
-    slope_diff <- slope_http - slope_grpc
-    
-    var_crossover <- (1/slope_diff^2) * (
-      vcov_matrix["(Intercept)", "(Intercept)"] + 
-      vcov_matrix["protocolgrpc", "protocolgrpc"] +
-      2 * vcov_matrix["(Intercept)", "protocolgrpc"] +
-      crossover_point_centered^2 * (
-        vcov_matrix["payload_size_centered", "payload_size_centered"] +
-        vcov_matrix["protocolgrpc:payload_size_centered", "protocolgrpc:payload_size_centered"] +
-        2 * vcov_matrix["payload_size_centered", "protocolgrpc:payload_size_centered"]
-      ) +
-      2 * crossover_point_centered * (
-        vcov_matrix["(Intercept)", "payload_size_centered"] +
-        vcov_matrix["protocolgrpc", "payload_size_centered"] +
-        vcov_matrix["(Intercept)", "protocolgrpc:payload_size_centered"] +
-        vcov_matrix["protocolgrpc", "protocolgrpc:payload_size_centered"]
-      )
-    )
-    
-    se_crossover <- sqrt(var_crossover)
-    ci_lower <- crossover_point - 1.96 * se_crossover
-    ci_upper <- crossover_point + 1.96 * se_crossover
-    
-    cat(sprintf("Standard error: %.2f\n", se_crossover))
-    cat(sprintf("95%% Confidence Interval: [%.0f, %.0f]\n", ci_lower, ci_upper))
-  } else {
-    cat("\nSlopes are parallel - no crossover point\n")
-    crossover_point <- NA
-    ci_lower <- NA
-    ci_upper <- NA
+  if (nrow(data_filtered) < 10) {
+    cat("Insufficient data for payload size", ps, "\n")
+    next
   }
   
-  cat("\n--- Quadratic Model with Interaction ---\n")
+  cat("--- 2^k Factorial Analysis ---\n")
   
-  model_quadratic <- lm(value ~ protocol * payload_size_centered + 
-                        protocol * I(payload_size_centered^2), 
-                       data = data_filtered)
-  
-  cat("Quadratic model summary:\n")
-  print(summary(model_quadratic))
-  
-  data_summary <- data_filtered %>%
-    group_by(payload_size, protocol) %>%
+  data_grouped <- data_filtered %>%
+    group_by(experiment_id, app_name) %>%
     summarise(
-      mean_latency = mean(value, na.rm = TRUE),
-      se_latency = sd(value, na.rm = TRUE) / sqrt(n()),
+      value = mean(value),
       .groups = "drop"
     )
   
-  payload_range <- seq(min(data_summary$payload_size), 
-                       max(data_summary$payload_size), 
-                       length.out = 100)
-  payload_centered <- payload_range - mean(data_filtered$payload_size, na.rm = TRUE)
+  data_grouped_extended <- data_grouped %>%
+    group_by(app_name) %>%
+    summarise(
+      mean = mean(value),
+      value = value,
+      e = value - mean(value),
+      experiment_id = experiment_id,
+      .groups = "drop"
+    )
   
-  pred_data <- expand_grid(
-    payload_size = payload_range,
-    payload_size_centered = payload_centered,
-    protocol = levels(data_filtered$protocol)
-  )
+  inner_group <- data_grouped %>%
+    group_by(app_name) %>%
+    summarise(
+      mean = mean(value),
+      .groups = "drop"
+    )
   
-  pred_data$predicted <- predict(model_interaction, newdata = pred_data)
-  pred_data$predicted_quad <- predict(model_quadratic, newdata = pred_data)
-  
-  png(sprintf("crossover_%s.png", lang), width = 1400, height = 800, res = 150)
-  par(mfrow = c(1, 2))
-  
-  plot(data_summary$payload_size, data_summary$mean_latency,
-       col = ifelse(data_summary$protocol == "http", "blue", "red"),
-       pch = 19,
-       xlab = "Payload Size (number of integers)",
-       ylab = "Mean Latency (seconds)",
-       main = sprintf("Crossover Analysis: %s (Linear)", lang))
-  
-  http_pred <- pred_data %>% filter(protocol == "http")
-  grpc_pred <- pred_data %>% filter(protocol == "grpc")
-  
-  lines(http_pred$payload_size, http_pred$predicted, col = "blue", lwd = 2)
-  lines(grpc_pred$payload_size, grpc_pred$predicted, col = "red", lwd = 2)
-  
-  if (!is.na(crossover_point)) {
-    abline(v = crossover_point, col = "green", lty = 2, lwd = 2)
-    abline(v = ci_lower, col = "green", lty = 3)
-    abline(v = ci_upper, col = "green", lty = 3)
+  if (nrow(inner_group) == 4) {
+    sum_effect <- inner_group$mean[1] + inner_group$mean[3] + inner_group$mean[2] + inner_group$mean[4]
+    effectLang <- -inner_group$mean[1] + inner_group$mean[3] - inner_group$mean[2] + inner_group$mean[4]
+    effectProt <- -inner_group$mean[1] - inner_group$mean[3] + inner_group$mean[2] + inner_group$mean[4]
+    effectInt <- inner_group$mean[1] - inner_group$mean[3] - inner_group$mean[2] + inner_group$mean[4]
+    
+    n_reps <- nrow(data_grouped) / 4
+    ssy <- sum(data_grouped_extended$value^2)
+    sse <- ssy - (n_reps*4*((sum_effect/4)^2 + (effectLang/4)^2 + (effectProt/4)^2 + (effectInt/4)^2))
+    ss0 <- n_reps*4*((sum_effect/4)^2)
+    sst <- ssy - ss0
+    ssl <- n_reps*4*((effectLang/4)^2)
+    ssp <- n_reps*4*((effectProt/4)^2)
+    sslp <- n_reps*4*((effectInt/4)^2)
+    
+    langInfluence <- ssl/sst*100
+    protInfluence <- ssp/sst*100
+    intInfluence <- sslp/sst*100
+    errorInfluence <- 100 - (langInfluence + protInfluence + intInfluence)
+    
+    cat("Sum effect:", sum_effect, "\n")
+    cat("Language effect:", effectLang, "\n")
+    cat("Protocol effect:", effectProt, "\n")
+    cat("Interaction effect:", effectInt, "\n")
+    cat("\nInfluence (%):\n")
+    cat("  Language:", langInfluence, "%\n")
+    cat("  Protocol:", protInfluence, "%\n")
+    cat("  Interaction:", intInfluence, "%\n")
+    cat("  Error:", errorInfluence, "%\n")
   }
   
-  legend("topleft",
-         legend = c("HTTP/REST", "gRPC", if(!is.na(crossover_point)) "Crossover" else NULL),
-         col = c("blue", "red", if(!is.na(crossover_point)) "green" else NULL),
-         lty = c(1, 1, if(!is.na(crossover_point)) 2 else NULL),
-         lwd = c(2, 2, if(!is.na(crossover_point)) 2 else NULL),
-         pch = c(19, 19, if(!is.na(crossover_point)) NA else NULL))
+  cat("\n--- Descriptive Statistics ---\n")
+  mean_javahttp <- mean(javahttp$value, na.rm = TRUE)
+  mean_javagrpc <- mean(javagrpc$value, na.rm = TRUE)
+  mean_gohttp <- mean(gohttp$value, na.rm = TRUE)
+  mean_gogrpc <- mean(gogrpc$value, na.rm = TRUE)
   
-  diff_data <- data_summary %>%
-    pivot_wider(names_from = protocol, values_from = mean_latency) %>%
-    mutate(diff = http - grpc)
+  median_javahttp <- median(javahttp$value, na.rm = TRUE)
+  median_javagrpc <- median(javagrpc$value, na.rm = TRUE)
+  median_gohttp <- median(gohttp$value, na.rm = TRUE)
+  median_gogrpc <- median(gogrpc$value, na.rm = TRUE)
   
-  plot(diff_data$payload_size, diff_data$diff,
-       xlab = "Payload Size (number of integers)",
-       ylab = "Latency Difference (HTTP - gRPC)",
-       main = sprintf("Performance Difference: %s", lang),
-       pch = 19, col = "purple")
-  abline(h = 0, col = "gray", lty = 2)
+  stddev_javahttp <- sd(javahttp$value, na.rm = TRUE)
+  stddev_javagrpc <- sd(javagrpc$value, na.rm = TRUE)
+  stddev_gohttp <- sd(gohttp$value, na.rm = TRUE)
+  stddev_gogrpc <- sd(gogrpc$value, na.rm = TRUE)
   
-  if (!is.na(crossover_point)) {
-    abline(v = crossover_point, col = "green", lty = 2, lwd = 2)
-    abline(v = ci_lower, col = "green", lty = 3)
-    abline(v = ci_upper, col = "green", lty = 3)
+  cat("Means:\n")
+  cat("  Java HTTP:", mean_javahttp, "\n")
+  cat("  Java gRPC:", mean_javagrpc, "\n")
+  cat("  Go HTTP:", mean_gohttp, "\n")
+  cat("  Go gRPC:", mean_gogrpc, "\n")
+  
+  cat("\nStandard Deviations:\n")
+  cat("  Java HTTP:", stddev_javahttp, "\n")
+  cat("  Java gRPC:", stddev_javagrpc, "\n")
+  cat("  Go HTTP:", stddev_gohttp, "\n")
+  cat("  Go gRPC:", stddev_gogrpc, "\n")
+  
+  cat("\n--- Statistical Tests ---\n")
+  
+  cat("Wilcoxon tests:\n")
+  if (nrow(javahttp) > 0 && nrow(javagrpc) > 0) {
+    wt1 <- wilcox.test(javahttp$value, javagrpc$value, paired = FALSE)
+    cat("  Java HTTP vs Java gRPC: p =", wt1$p.value, "\n")
+  }
+  if (nrow(javahttp) > 0 && nrow(gohttp) > 0) {
+    wt2 <- wilcox.test(javahttp$value, gohttp$value, paired = FALSE)
+    cat("  Java HTTP vs Go HTTP: p =", wt2$p.value, "\n")
+  }
+  if (nrow(javahttp) > 0 && nrow(gogrpc) > 0) {
+    wt3 <- wilcox.test(javahttp$value, gogrpc$value, paired = FALSE)
+    cat("  Java HTTP vs Go gRPC: p =", wt3$p.value, "\n")
+  }
+  if (nrow(javagrpc) > 0 && nrow(gohttp) > 0) {
+    wt4 <- wilcox.test(javagrpc$value, gohttp$value, paired = FALSE)
+    cat("  Java gRPC vs Go HTTP: p =", wt4$p.value, "\n")
+  }
+  if (nrow(javagrpc) > 0 && nrow(gogrpc) > 0) {
+    wt5 <- wilcox.test(javagrpc$value, gogrpc$value, paired = FALSE)
+    cat("  Java gRPC vs Go gRPC: p =", wt5$p.value, "\n")
+  }
+  if (nrow(gohttp) > 0 && nrow(gogrpc) > 0) {
+    wt6 <- wilcox.test(gohttp$value, gogrpc$value, paired = FALSE)
+    cat("  Go HTTP vs Go gRPC: p =", wt6$p.value, "\n")
   }
   
-  diff_pred <- pred_data %>%
-    pivot_wider(id_cols = payload_size, 
-                names_from = protocol, 
-                values_from = predicted) %>%
-    mutate(diff = http - grpc)
+  cat("\nKruskal-Wallis tests:\n")
+  kw1 <- kruskal.test(value ~ protocol, data = data_filtered)
+  cat("  Protocol: p =", kw1$p.value, "\n")
+  kw2 <- kruskal.test(value ~ language, data = data_filtered)
+  cat("  Language: p =", kw2$p.value, "\n")
+  data_filtered$combined_factor <- interaction(data_filtered$protocol, data_filtered$language)
+  kw3 <- kruskal.test(value ~ combined_factor, data = data_filtered)
+  cat("  Combined: p =", kw3$p.value, "\n")
   
-  lines(diff_pred$payload_size, diff_pred$diff, col = "purple", lwd = 2)
+  cat("\n--- Normality Tests ---\n")
+  if (nrow(javahttp) > 3 && nrow(javahttp) <= 5000) {
+    sh1 <- shapiro.test(javahttp$value)
+    cat("  Java HTTP: p =", sh1$p.value, "\n")
+  }
+  if (nrow(javagrpc) > 3 && nrow(javagrpc) <= 5000) {
+    sh2 <- shapiro.test(javagrpc$value)
+    cat("  Java gRPC: p =", sh2$p.value, "\n")
+  }
+  if (nrow(gohttp) > 3 && nrow(gohttp) <= 5000) {
+    sh3 <- shapiro.test(gohttp$value)
+    cat("  Go HTTP: p =", sh3$p.value, "\n")
+  }
+  if (nrow(gogrpc) > 3 && nrow(gogrpc) <= 5000) {
+    sh4 <- shapiro.test(gogrpc$value)
+    cat("  Go gRPC: p =", sh4$p.value, "\n")
+  }
   
+  cat("\n--- Creating Graphics ---\n")
+  
+  dev.new()
+  par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+  
+  boxplot(value ~ app_name, data = data_filtered, col = "lightblue", 
+          main = paste("Boxplot - Payload", ps),
+          xlab = "Aplicação", ylab = "Valor da Requisição",
+          cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+  
+  hist(javahttp$value, breaks = "Sturges", main = paste("Java REST - Payload", ps),
+       xlab = "Value", ylab = "Frequency", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+  
+  hist(javagrpc$value, breaks = "Sturges", main = paste("Java gRPC - Payload", ps),
+       xlab = "Value", ylab = "Frequency", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+  
+  hist(gohttp$value, breaks = "Sturges", main = paste("Go REST - Payload", ps),
+       xlab = "Value", ylab = "Frequency", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+  
+  dev.new()
+  par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+  
+  qqnorm(javahttp$value, main = paste("Q-Q Java REST - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(javahttp$value, col = "red")
+  
+  qqnorm(javagrpc$value, main = paste("Q-Q Java gRPC - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(javagrpc$value, col = "red")
+  
+  qqnorm(gohttp$value, main = paste("Q-Q Go REST - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(gohttp$value, col = "red")
+  
+  qqnorm(gogrpc$value, main = paste("Q-Q Go gRPC - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(gogrpc$value, col = "red")
+  
+  png(sprintf("boxplot_payload_%d.png", ps), width = 1200, height = 800, res = 150)
+  par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+  boxplot(value ~ app_name, data = data_filtered, col = "lightblue", 
+          main = paste("Boxplot - Payload", ps),
+          xlab = "Aplicação", ylab = "Valor da Requisição",
+          cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+  hist(javahttp$value, breaks = "Sturges", main = paste("Java REST - Payload", ps),
+       xlab = "Value", ylab = "Frequency", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+  hist(javagrpc$value, breaks = "Sturges", main = paste("Java gRPC - Payload", ps),
+       xlab = "Value", ylab = "Frequency", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+  hist(gohttp$value, breaks = "Sturges", main = paste("Go REST - Payload", ps),
+       xlab = "Value", ylab = "Frequency", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
   dev.off()
   
-  cat(sprintf("\nPlot saved: crossover_%s.png\n", lang))
+  png(sprintf("qqplot_payload_%d.png", ps), width = 1200, height = 800, res = 150)
+  par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+  qqnorm(javahttp$value, main = paste("Q-Q Java REST - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(javahttp$value, col = "red")
+  qqnorm(javagrpc$value, main = paste("Q-Q Java gRPC - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(javagrpc$value, col = "red")
+  qqnorm(gohttp$value, main = paste("Q-Q Go REST - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(gohttp$value, col = "red")
+  qqnorm(gogrpc$value, main = paste("Q-Q Go gRPC - Payload", ps), cex.main = 1.1, cex.axis = 0.9)
+  qqline(gogrpc$value, col = "red")
+  dev.off()
   
-  return(list(
-    crossover_point = if(exists("crossover_point")) crossover_point else NA,
-    ci_lower = if(exists("ci_lower")) ci_lower else NA,
-    ci_upper = if(exists("ci_upper")) ci_upper else NA,
-    model_linear = model_interaction,
-    model_quadratic = model_quadratic
-  ))
+  cat("Saved: boxplot_payload_", ps, ".png, qqplot_payload_", ps, ".png\n", sep = "")
 }
 
-results_go <- analyzeCrossover(data, "go")
-results_java <- analyzeCrossover(data, "java")
+cat("\n", rep("=", 60), "\n")
+cat("OVERALL ANALYSIS ACROSS ALL PAYLOAD SIZES\n")
+cat(rep("=", 60), "\n\n")
 
-cat("\n=== Summary ===\n")
-cat("\nGo - Crossover point where REST becomes better than gRPC:\n")
-if (!is.na(results_go$crossover_point)) {
-  cat(sprintf("  Estimate: %.0f integers\n", results_go$crossover_point))
-  cat(sprintf("  95%% CI: [%.0f, %.0f]\n", results_go$ci_lower, results_go$ci_upper))
+data_all <- data %>%
+  remover_outliers("value")
+
+data_all_filtered <- data_all %>%
+  filter(!is.na(language), !is.na(protocol))
+
+cat("--- Overall Boxplot ---\n")
+dev.new()
+boxplot(value ~ app_name, data = data_all_filtered, col = "lightblue", 
+        main = "Boxplot - All Payload Sizes",
+        xlab = "Aplicação", ylab = "Valor da Requisição",
+        cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+
+png("boxplot_all_payloads.png", width = 1200, height = 800, res = 150)
+boxplot(value ~ app_name, data = data_all_filtered, col = "lightblue", 
+        main = "Boxplot - All Payload Sizes",
+        xlab = "Aplicação", ylab = "Valor da Requisição",
+        cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+dev.off()
+
+cat("--- Performance by Payload Size ---\n")
+
+cat("Testing normality for each app across all payload sizes...\n")
+normality_results <- data_all_filtered %>%
+  group_by(app_name) %>%
+  summarise(
+    shapiro_p = if(n() > 3) {
+      sample_data <- if(n() > 5000) sample(value, 5000) else value
+      tryCatch(shapiro.test(sample_data)$p.value, error = function(e) NA)
+    } else NA,
+    is_normal = if(!is.na(shapiro_p)) shapiro_p > 0.05 else FALSE,
+    .groups = "drop"
+  )
+
+cat("Normality results (p > 0.05 = normal):\n")
+for (i in 1:nrow(normality_results)) {
+  cat("  ", normality_results$app_name[i], ": p =", 
+      if(is.na(normality_results$shapiro_p[i])) "N/A" else normality_results$shapiro_p[i],
+      "-", if(normality_results$is_normal[i]) "NORMAL" else "NOT NORMAL", "\n")
+}
+
+use_median <- !all(normality_results$is_normal, na.rm = TRUE)
+cat("\nUsing", if(use_median) "MEDIAN" else "MEAN", "for summary statistics\n\n")
+
+dev.new()
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+
+if (use_median) {
+  data_summary <- data_all_filtered %>%
+    group_by(payload_size, app_name) %>%
+    summarise(
+      central_value = median(value, na.rm = TRUE),
+      q25 = quantile(value, 0.25, na.rm = TRUE),
+      q75 = quantile(value, 0.75, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    arrange(payload_size)
 } else {
-  cat("  No crossover point detected\n")
+  data_summary <- data_all_filtered %>%
+    group_by(payload_size, app_name) %>%
+    summarise(
+      central_value = mean(value, na.rm = TRUE),
+      se_value = sd(value, na.rm = TRUE) / sqrt(n()),
+      .groups = "drop"
+    ) %>%
+    arrange(payload_size)
 }
 
-cat("\nJava - Crossover point where REST becomes better than gRPC:\n")
-if (!is.na(results_java$crossover_point)) {
-  cat(sprintf("  Estimate: %.0f integers\n", results_java$crossover_point))
-  cat(sprintf("  95%% CI: [%.0f, %.0f]\n", results_java$ci_lower, results_java$ci_upper))
-} else {
-  cat("  No crossover point detected\n")
+javahttp_summary <- data_summary %>% filter(app_name == "javahttp")
+javagrpc_summary <- data_summary %>% filter(app_name == "javagrpc")
+gohttp_summary <- data_summary %>% filter(app_name == "gohttp")
+gogrpc_summary <- data_summary %>% filter(app_name == "gogrpc")
+
+ylabel <- if(use_median) "Median Latency (seconds)" else "Mean Latency (seconds)"
+
+plot(javahttp_summary$payload_size, javahttp_summary$central_value, 
+     type = "b", col = "blue", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Java REST Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(javahttp_summary)) {
+  arrows(javahttp_summary$payload_size, javahttp_summary$q25,
+         javahttp_summary$payload_size, javahttp_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "blue", lwd = 1)
+}
+grid()
+
+plot(javagrpc_summary$payload_size, javagrpc_summary$central_value, 
+     type = "b", col = "red", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Java gRPC Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(javagrpc_summary)) {
+  arrows(javagrpc_summary$payload_size, javagrpc_summary$q25,
+         javagrpc_summary$payload_size, javagrpc_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "red", lwd = 1)
+}
+grid()
+
+plot(gohttp_summary$payload_size, gohttp_summary$central_value, 
+     type = "b", col = "darkgreen", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Go REST Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(gohttp_summary)) {
+  arrows(gohttp_summary$payload_size, gohttp_summary$q25,
+         gohttp_summary$payload_size, gohttp_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "darkgreen", lwd = 1)
+}
+grid()
+
+plot(gogrpc_summary$payload_size, gogrpc_summary$central_value, 
+     type = "b", col = "orange", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Go gRPC Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(gogrpc_summary)) {
+  arrows(gogrpc_summary$payload_size, gogrpc_summary$q25,
+         gogrpc_summary$payload_size, gogrpc_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "orange", lwd = 1)
+}
+grid()
+
+png("performance_by_payload.png", width = 1600, height = 1200, res = 150)
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 2))
+plot(javahttp_summary$payload_size, javahttp_summary$central_value, 
+     type = "b", col = "blue", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Java REST Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(javahttp_summary)) {
+  arrows(javahttp_summary$payload_size, javahttp_summary$q25,
+         javahttp_summary$payload_size, javahttp_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "blue", lwd = 1)
+}
+grid()
+plot(javagrpc_summary$payload_size, javagrpc_summary$central_value, 
+     type = "b", col = "red", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Java gRPC Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(javagrpc_summary)) {
+  arrows(javagrpc_summary$payload_size, javagrpc_summary$q25,
+         javagrpc_summary$payload_size, javagrpc_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "red", lwd = 1)
+}
+grid()
+plot(gohttp_summary$payload_size, gohttp_summary$central_value, 
+     type = "b", col = "darkgreen", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Go REST Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(gohttp_summary)) {
+  arrows(gohttp_summary$payload_size, gohttp_summary$q25,
+         gohttp_summary$payload_size, gohttp_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "darkgreen", lwd = 1)
+}
+grid()
+plot(gogrpc_summary$payload_size, gogrpc_summary$central_value, 
+     type = "b", col = "orange", lwd = 2, pch = 19, cex = 0.8,
+     xlab = "Payload Size", ylab = ylabel,
+     main = "Go gRPC Performance", cex.lab = 1.0, cex.main = 1.1, cex.axis = 0.9)
+if (use_median && "q25" %in% names(gogrpc_summary)) {
+  arrows(gogrpc_summary$payload_size, gogrpc_summary$q25,
+         gogrpc_summary$payload_size, gogrpc_summary$q75,
+         length = 0.05, angle = 90, code = 3, col = "orange", lwd = 1)
+}
+grid()
+dev.off()
+
+cat("Saved: boxplot_all_payloads.png, performance_by_payload.png\n")
+
+cat("\n--- Line Chart: All Applications ---\n")
+dev.new()
+par(mar = c(5, 5, 4, 2))
+
+plot(javahttp_summary$payload_size, javahttp_summary$central_value, 
+     type = "b", col = "blue", lwd = 2.5, pch = 19, cex = 1.0,
+     xlab = "Tamanho da Requisição (número de inteiros)", 
+     ylab = ylabel,
+     main = "Desempenho por Tamanho de Requisição",
+     cex.lab = 1.1, cex.main = 1.2, cex.axis = 1.0,
+     ylim = range(c(javahttp_summary$central_value, javagrpc_summary$central_value,
+                     gohttp_summary$central_value, gogrpc_summary$central_value), na.rm = TRUE))
+
+lines(javagrpc_summary$payload_size, javagrpc_summary$central_value, 
+      type = "b", col = "red", lwd = 2.5, pch = 17, cex = 1.0)
+
+lines(gohttp_summary$payload_size, gohttp_summary$central_value, 
+      type = "b", col = "darkgreen", lwd = 2.5, pch = 15, cex = 1.0)
+
+lines(gogrpc_summary$payload_size, gogrpc_summary$central_value, 
+      type = "b", col = "orange", lwd = 2.5, pch = 18, cex = 1.0)
+
+if (use_median && "q25" %in% names(javahttp_summary)) {
+  arrows(javahttp_summary$payload_size, javahttp_summary$q25,
+         javahttp_summary$payload_size, javahttp_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "blue", lwd = 1, alpha = 0.3)
+  arrows(javagrpc_summary$payload_size, javagrpc_summary$q25,
+         javagrpc_summary$payload_size, javagrpc_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "red", lwd = 1, alpha = 0.3)
+  arrows(gohttp_summary$payload_size, gohttp_summary$q25,
+         gohttp_summary$payload_size, gohttp_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "darkgreen", lwd = 1, alpha = 0.3)
+  arrows(gogrpc_summary$payload_size, gogrpc_summary$q25,
+         gogrpc_summary$payload_size, gogrpc_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "orange", lwd = 1, alpha = 0.3)
 }
 
+legend("topleft", 
+       legend = c("Java REST", "Java gRPC", "Go REST", "Go gRPC"),
+       col = c("blue", "red", "darkgreen", "orange"),
+       lty = 1, lwd = 2.5, pch = c(19, 17, 15, 18),
+       cex = 1.0)
 
+grid()
+
+png("line_chart_all_apps.png", width = 1600, height = 1000, res = 150)
+par(mar = c(5, 5, 4, 2))
+
+plot(javahttp_summary$payload_size, javahttp_summary$central_value, 
+     type = "b", col = "blue", lwd = 2.5, pch = 19, cex = 1.0,
+     xlab = "Tamanho da Requisição (número de inteiros)", 
+     ylab = ylabel,
+     main = "Desempenho por Tamanho de Requisição",
+     cex.lab = 1.1, cex.main = 1.2, cex.axis = 1.0,
+     ylim = range(c(javahttp_summary$central_value, javagrpc_summary$central_value,
+                     gohttp_summary$central_value, gogrpc_summary$central_value), na.rm = TRUE))
+
+lines(javagrpc_summary$payload_size, javagrpc_summary$central_value, 
+      type = "b", col = "red", lwd = 2.5, pch = 17, cex = 1.0)
+
+lines(gohttp_summary$payload_size, gohttp_summary$central_value, 
+      type = "b", col = "darkgreen", lwd = 2.5, pch = 15, cex = 1.0)
+
+lines(gogrpc_summary$payload_size, gogrpc_summary$central_value, 
+      type = "b", col = "orange", lwd = 2.5, pch = 18, cex = 1.0)
+
+if (use_median && "q25" %in% names(javahttp_summary)) {
+  arrows(javahttp_summary$payload_size, javahttp_summary$q25,
+         javahttp_summary$payload_size, javahttp_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "blue", lwd = 1)
+  arrows(javagrpc_summary$payload_size, javagrpc_summary$q25,
+         javagrpc_summary$payload_size, javagrpc_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "red", lwd = 1)
+  arrows(gohttp_summary$payload_size, gohttp_summary$q25,
+         gohttp_summary$payload_size, gohttp_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "darkgreen", lwd = 1)
+  arrows(gogrpc_summary$payload_size, gogrpc_summary$q25,
+         gogrpc_summary$payload_size, gogrpc_summary$q75,
+         length = 0.03, angle = 90, code = 3, col = "orange", lwd = 1)
+}
+
+legend("topleft", 
+       legend = c("Java REST", "Java gRPC", "Go REST", "Go gRPC"),
+       col = c("blue", "red", "darkgreen", "orange"),
+       lty = 1, lwd = 2.5, pch = c(19, 17, 15, 18),
+       cex = 1.0)
+
+grid()
+dev.off()
+
+cat("Saved: line_chart_all_apps.png\n")
+
+cat("\nAnalysis complete!\n")
