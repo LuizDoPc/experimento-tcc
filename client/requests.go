@@ -21,21 +21,12 @@ import (
 const (
 	numReqs     = 248
 	numReqsJava = 1248
+	skipRequests = 1000
 	// numReqs     = 3
 	// numReqsJava = 4
 )
 
-func getPayload(isHTTP bool, sizeType int) interface{} {
-	numberOfNumbers := 204800
-	switch sizeType {
-		case 1:
-			numberOfNumbers = 200
-		case 2:
-			numberOfNumbers = 204800
-		default:
-			numberOfNumbers = 204800
-	}
-
+func getPayload(isHTTP bool, numberOfNumbers int) interface{} {
 	goArray := make([]int32, numberOfNumbers)
 
 	rand.Seed(time.Now().UnixNano())
@@ -57,7 +48,7 @@ func getPayload(isHTTP bool, sizeType int) interface{} {
 			return nil
 		}
 
-		return fmt.Sprintf("%s", string(jsonString))
+		return string(jsonString)
 	}
 
 	return goArray
@@ -71,6 +62,23 @@ type MetricValue struct {
 
 var metrics = []MetricValue{}
 
+func waitForHTTPServer(baseURL string, maxRetries int, retryInterval time.Duration) error {
+	client := &http.Client{Timeout: 2 * time.Second}
+	for i := 0; i < maxRetries; i++ {
+		resp, err := client.Get(baseURL)
+		if err == nil {
+			resp.Body.Close()
+			if resp.StatusCode < 500 {
+				return nil
+			}
+		}
+		if i < maxRetries-1 {
+			time.Sleep(retryInterval)
+		}
+	}
+	return fmt.Errorf("servidor HTTP não está disponível em %s após %d tentativas", baseURL, maxRetries)
+}
+
 func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int, appName string) {
 	for i := 0; i < amount; i++ {
 
@@ -78,7 +86,7 @@ func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int
 		_, err := http.Post(url, "application/json", bytes.NewBuffer([]byte(payload)))
 		elapsed := time.Since(start)
 
-		if appName != "javahttp" || i >= 1000 {
+		if appName != "javahttp" || i >= skipRequests {
 			fmt.Printf("Registrando metrica de requisicao")
 			metrics = append(metrics, MetricValue{
 				CValue: strconv.Itoa(i),
@@ -93,6 +101,20 @@ func sendHTTPPOSTRequest(url, payload string, interval time.Duration, amount int
 		fmt.Printf("Requisição HTTP POST para %s número %d\n", url, i+1)
 		time.Sleep(interval)
 	}
+}
+
+func waitForGRPCServer(address string, maxRetries int, retryInterval time.Duration) error {
+	for i := 0; i < maxRetries; i++ {
+		conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(2*time.Second))
+		if err == nil {
+			conn.Close()
+			return nil
+		}
+		if i < maxRetries-1 {
+			time.Sleep(retryInterval)
+		}
+	}
+	return fmt.Errorf("servidor gRPC não está disponível em %s após %d tentativas", address, maxRetries)
 }
 
 func sendGRPCRequest(address string, payload []int32, interval time.Duration, amount int, appName string) {
@@ -110,7 +132,7 @@ func sendGRPCRequest(address string, payload []int32, interval time.Duration, am
 		_, err := client.Search(context.Background(), &pb.Array{Array: payload})
 		elapsed := time.Since(start)
 
-		if appName != "javagrpc" || i >= 1000 {
+		if appName != "javagrpc" || i >= skipRequests {
 			fmt.Printf("Registrando metrica de requisicao")
 			metrics = append(metrics, MetricValue{
 				CValue: strconv.Itoa(i),
@@ -127,30 +149,30 @@ func sendGRPCRequest(address string, payload []int32, interval time.Duration, am
 	}
 }
 
-func sendJavaHttpRequests (url string, sizeType int, amount int) {
-	fmt.Printf("JAVA-HTTP - Enviando %d requisições HTTP POST para %s\n", amount, url)
-	httpPayload := getPayload(true, sizeType).(string)
+func sendJavaHttpRequests (url string, numberOfNumbers int, amount int) {
+	fmt.Printf("JAVA-HTTP - Enviando %d requisições HTTP POST para %s com payload de %d números\n", amount, url, numberOfNumbers)
+	httpPayload := getPayload(true, numberOfNumbers).(string)
 	interval := time.Second
 	sendHTTPPOSTRequest(url, httpPayload, interval, amount, "javahttp")
 }
 
-func sendGoHttpRequests (url string, sizeType int, amount int) {
-	fmt.Printf("GO-HTTP - Enviando %d requisições HTTP POST para %s\n", amount, url)
-	httpPayload := getPayload(true, sizeType).(string)
+func sendGoHttpRequests (url string, numberOfNumbers int, amount int) {
+	fmt.Printf("GO-HTTP - Enviando %d requisições HTTP POST para %s com payload de %d números\n", amount, url, numberOfNumbers)
+	httpPayload := getPayload(true, numberOfNumbers).(string)
 	interval := time.Second
 	sendHTTPPOSTRequest(url, httpPayload, interval, amount, "gohttp")
 }
 
-func sendJavaGrpcRequests (address string, sizeType int, amount int) {
-	fmt.Printf("JAVA-GRPC - Enviando %d requisições gRPC para %s\n", amount, address)
-	grpcPayload := getPayload(false, sizeType).([]int32)
+func sendJavaGrpcRequests (address string, numberOfNumbers int, amount int) {
+	fmt.Printf("JAVA-GRPC - Enviando %d requisições gRPC para %s com payload de %d números\n", amount, address, numberOfNumbers)
+	grpcPayload := getPayload(false, numberOfNumbers).([]int32)
 	interval := time.Second
 	sendGRPCRequest(address, grpcPayload, interval, amount, "javagrpc")
 }
 
-func sendGoGrpcRequests (address string, sizeType int, amount int) {
-	fmt.Printf("GO-GRPC - Enviando %d requisições gRPC para %s\n", amount, address)
-	grpcPayload := getPayload(false, sizeType).([]int32)
+func sendGoGrpcRequests (address string, numberOfNumbers int, amount int) {
+	fmt.Printf("GO-GRPC - Enviando %d requisições gRPC para %s com payload de %d números\n", amount, address, numberOfNumbers)
+	grpcPayload := getPayload(false, numberOfNumbers).([]int32)
 	interval := time.Second
 	sendGRPCRequest(address, grpcPayload, interval, amount, "gogrpc")
 }
@@ -208,13 +230,7 @@ func createGoApp(binPath string) (ManagedCommand, error) {
 	return goCommand, nil
 }
 
-func runRequests(namespace string, size string) []MetricValue {
-	sizeType := 1
-
-	if size == "big" {
-		sizeType = 2
-	}
-
+func runRequests(namespace string, payloadSize int) []MetricValue {
 	ipjavahttp, err := getLoadBalancerIP(namespace, "javahttptest-helm-chart")
 	if err != nil {
 		log.Fatalf("Erro ao obter o IP do LoadBalancer: %v", err)
@@ -237,7 +253,7 @@ func runRequests(namespace string, size string) []MetricValue {
 	grpcAddress1 := fmt.Sprintf("%s:50059", ipjavagrpc)
 	grpcAddress2 := fmt.Sprintf("%s:50001", ipgogrpc)
 
-	fmt.Println("Testando todas as aplicações")
+	fmt.Printf("Testando todas as aplicações com payload de %d números\n", payloadSize)
 
 	javaGrpcPath := "../java-grpc/target/java-grpc-0.0.1-SNAPSHOT.jar"
 	javagrpc, err := createJavaApp(javaGrpcPath)
@@ -245,7 +261,13 @@ func runRequests(namespace string, size string) []MetricValue {
 		fmt.Println(err)
 		log.Fatalf("Erro ao criar aplicação Java: %v", err)
 	}
-	sendJavaGrpcRequests(grpcAddress1, sizeType, numReqsJava)
+	fmt.Println("Aguardando servidor Java gRPC ficar pronto...")
+	if err := waitForGRPCServer(grpcAddress1, 30, 1*time.Second); err != nil {
+		javagrpc.Stop()
+		log.Fatalf("Erro ao aguardar servidor Java gRPC: %v", err)
+	}
+	fmt.Println("Servidor Java gRPC está pronto!")
+	sendJavaGrpcRequests(grpcAddress1, payloadSize, numReqsJava)
 	javagrpc.Stop()
 	
 	goGrpcPath := "../go-grpc/api/api"
@@ -253,7 +275,13 @@ func runRequests(namespace string, size string) []MetricValue {
 	if err != nil {
 		log.Fatalf("Erro ao criar aplicação Go: %v", err)
 	}
-	sendGoGrpcRequests(grpcAddress2, sizeType, numReqs)
+	fmt.Println("Aguardando servidor Go gRPC ficar pronto...")
+	if err := waitForGRPCServer(grpcAddress2, 30, 1*time.Second); err != nil {
+		gogrpc.Stop()
+		log.Fatalf("Erro ao aguardar servidor Go gRPC: %v", err)
+	}
+	fmt.Println("Servidor Go gRPC está pronto!")
+	sendGoGrpcRequests(grpcAddress2, payloadSize, numReqs)
 	gogrpc.Stop()
 
 	javaHttpPath := "../java-http/target/java-http-0.0.1-SNAPSHOT.jar"
@@ -261,7 +289,13 @@ func runRequests(namespace string, size string) []MetricValue {
 	if err != nil {
 		log.Fatalf("Erro ao criar aplicação Java: %v", err)
 	}
-	sendJavaHttpRequests(httpURL1, sizeType, numReqsJava)
+	fmt.Println("Aguardando servidor Java HTTP ficar pronto...")
+	if err := waitForHTTPServer(httpURL1, 30, 1*time.Second); err != nil {
+		fmt.Printf("Aviso: não foi possível verificar saúde do servidor, tentando continuar: %v\n", err)
+	} else {
+		fmt.Println("Servidor Java HTTP está pronto!")
+	}
+	sendJavaHttpRequests(httpURL1, payloadSize, numReqsJava)
 	javahttp.Stop()
 
 	goHttpPath := "../go-http/api/api"
@@ -269,7 +303,13 @@ func runRequests(namespace string, size string) []MetricValue {
 	if err != nil {
 		log.Fatalf("Erro ao criar aplicação Go: %v", err)
 	}
-	sendGoHttpRequests(httpURL2, sizeType, numReqs)
+	fmt.Println("Aguardando servidor Go HTTP ficar pronto...")
+	if err := waitForHTTPServer(httpURL2, 30, 1*time.Second); err != nil {
+		fmt.Printf("Aviso: não foi possível verificar saúde do servidor, tentando continuar: %v\n", err)
+	} else {
+		fmt.Println("Servidor Go HTTP está pronto!")
+	}
+	sendGoHttpRequests(httpURL2, payloadSize, numReqs)
 	gohttp.Stop()
 
 	tempMetrics := metrics

@@ -8,7 +8,7 @@ volumes:
   prometheus_data:
    
 services:
-  java-http:
+  go-http:
     image: luizdopc/go-http:v0.4
     container_name: go-http
     ports:

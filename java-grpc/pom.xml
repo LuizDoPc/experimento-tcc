@@ -14,7 +14,7 @@
     <name>java-grpc</name>
     <description>java-grpc</description>
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -25,12 +25,12 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.8.0</version>
+            <version>3.21.12</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>3.14.0</version>
+            <version>3.21.12</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.grpc/protoc-gen-grpc-java -->
@@ -99,21 +99,19 @@
     </dependencies>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
@@ -138,13 +136,16 @@
                 <artifactId>protobuf-maven-plugin</artifactId>
                 <version>0.6.1</version>
                 <configuration>
-                    <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:linux-x86_64</protocArtifact>
-                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.40.1:exe:linux-x86_64</pluginArtifact>
-
-<!--                        <protocArtifact>com.google.protobuf:protoc:3.14.0:exe:osx-x86_64</protocArtifact>-->
-<!--                        <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.40.1:exe:osx-x86_64</pluginArtifact>-->
- 
+                    <protocArtifact>com.google.protobuf:protoc:3.21.12:exe:${os.detected.classifier}</protocArtifact>
+                    <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.56.0:exe:${os.detected.classifier}</pluginArtifact>
                     <pluginId>grpc-java</pluginId>
+                    <includes>
+                        <include>**/*.proto</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/._*</exclude>
+                        <exclude>**/.DS_Store</exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
