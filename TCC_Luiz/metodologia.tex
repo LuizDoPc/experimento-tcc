@@ -1,0 +1,226 @@
+\chapter{METODOLOGIA}
+
+Neste estudo, foram construídas quatro aplicações distintas utilizando as linguagens de programação Java e Go, cada uma implementando dois protocolos de comunicação diferentes: HTTP e gRPC.
+Essas aplicações foram projetadas com simplicidade e foco na comparação de desempenho, contendo apenas um \textit{endpoint}.
+Esse \textit{endpoint} é responsável por receber uma lista de números aleatórios, iterar sobre essa lista e, em seguida, retornar o valor -1.
+A escolha de uma operação simples permite isolar o desempenho da linguagem de programação e do protocolo de comunicação das complexidades inerentes à lógica de negócios, facilitando uma comparação direta e objetiva entre as tecnologias em teste.
+
+Para cada combinação de linguagem de programação e protocolo, uma aplicação foi desenvolvida seguindo as melhores práticas e diretrizes específicas para cada linguagem e protocolo.
+
+As aplicações foram executadas em um \textit{cluster} de kubernetes. (TODO: justificar porque)
+
+Os testes foram executados em uma instalação do Ubuntu com a configuração mínima necessária, visando eliminar qualquer possível interferência de serviços ou aplicações secundárias no desempenho das aplicações em estudo.
+Esse ambiente foi escolhido para garantir que os recursos do sistema fossem dedicados quase que exclusivamente às aplicações e aos processos de teste, proporcionando assim resultados mais precisos e confiáveis.
+
+A métrica escolhida para avaliar o desempenho das aplicações neste estudo é o tempo de execução.
+Essa métrica é fundamental para compreender a eficiência de cada combinação de linguagem de programação e protocolo de comunicação, permitindo mensurar o tempo em que cada aplicação processa e responde às requisições enviadas.
+O tempo de execução é um indicador direto do desempenho e pode ser influenciado por diversos fatores, então será estudado o impacto das linguagens de programação e dos protocolos de comunicação nessa variável.
+
+Para que seja possível entender ainda mais sobre os fatores que influenciam o estudo, dois experimentos serão executados com tamanhos de requisições denominados "\textit{small}" e "\textit{big}".
+O \textit{payload} "\textit{small}", que compreende um arranjo de 200 números inteiros com valores aleatórios entre 0 e 1.000, foi meticulosamente calculado considerando a representação desses números em formato de texto.
+O cálculo revelou que o tamanho médio de cada número é aproximadamente 2,91 bytes, e ao incluir uma vírgula como separador entre os números (exceto após o último número), o tamanho total estimado para o \textit{payload} "\textit{small}" é de aproximadamente 0.763 KB.
+Este tamanho é representativo do tamanho médio de requisições HTTP comumente observadas em aplicações web, servindo como um \textit{benchmark} relevante para análises de desempenho \cite{chromium2012spdy}.
+
+Por outro lado, o \textit{payload} "\textit{big}" \space é concebido para ser exatamente 1.024 vezes maior que o "\textit{small}", refletindo uma carga significativamente mais pesada. Isso eleva o tamanho do \textit{payload} "\textit{big}" para aproximadamente 
+0,763
+×
+1.024
+=
+781,312KB. 
+Essa escala ampliada é crucial para testar o desempenho da aplicação sob condições extremas de carga, permitindo uma investigação detalhada sobre como diferentes tamanhos de \textit{payload} afetam a latência, o \textit{throughput} e outros indicadores vitais de desempenho nas aplicações distribuídas. Tal abordagem garante uma compreensão abrangente do comportamento da aplicação em variados cenários de carga, fornecendo \textit{insights} valiosos para otimização e escalabilidade.
+
+Observabilidade é a capacidade de inferir o estado interno de um sistema a partir de seus \textit{outputs}.
+Esta definição é fundamental para o monitoramento e gerenciamento de sistemas complexos, como aplicações distribuídas em ambientes de Kubernetes \cite{Kang2022Observability}.
+O Prometheus, por sua vez, é uma ferramenta \textit{open-source} amplamente reconhecida por sua eficácia na implementação de observabilidade, oferecendo funcionalidades como coleta de métricas em tempo real, processamento de consultas, visualização de dados e alertas~\cite{PrometheusDocumentation}. 
+Dentro do ambiente Kubernetes, a kube-prometheus-stack é particularmente valorizada por integrar o Prometheus com o Grafana e outros componentes, facilitando assim a observabilidade ao prover um pacote completo que inclui coleta de métricas, visualização através de \textit{dashboards} e suporte adaptado ao Kubernetes.
+
+Para a execução do experimento, foi desenvolvida uma aplicação de teste em Go, cujo propósito é automatizar o processo de teste, coleta e persistência de dados de desempenho das aplicações alvo.
+O código principal inicia configurando o acesso ao \textit{cluster} Kubernetes. 
+
+Para configurar e preparar o ambiente de teste, utilizamos o \texttt{helmfile}, uma ferramenta que facilita a orquestração de aplicações no Kubernetes por meio de arquivos de configuração YAML \cite{helmfileDocs}.
+
+Após preparar o ambiente de teste com o helmfile, a aplicação espera os \textit{pods} estarem prontos, assegurando que todos os componentes necessários estejam operacionais antes de iniciar as requisições de teste.
+
+A aplicação executa então uma série de requisições para as aplicações Java e Go, utilizando os protocolos HTTP e gRPC, de acordo com os parâmetros de experimento definidos. 
+
+Após a conclusão das requisições, a aplicação coleta métricas de desempenho de cada uma das aplicações testadas, diretamente dos \textit{endpoints} do Prometheus configurados para monitoramento.
+Finalmente, essas métricas são persistidas em um banco de dados SQL, permitindo análise posterior.
+Esse processo é repetido para vários experimentos, garantindo uma ampla base de dados para análise de desempenho. 
+
+Antes de dar início à execução prática do experimento, é imperativo estabelecer um projeto estatístico rigoroso e bem fundamentado.
+Esse planejamento envolve a definição clara dos objetivos do estudo, a escolha do desenho experimental adequado e a determinação das técnicas estatísticas a serem aplicadas na análise dos dados.
+
+Para as análises, as amostras não são pareadas devido à natureza intrínseca dos dados coletados, que envolvem comparações entre diferentes configurações de sistemas distribuídos sem correspondência direta entre as observações de cada grupo \cite{Illowsky2017IntroductoryStatistics}.
+Esse método é adequado para situações onde os dados de um par não têm contraparte no outro, como é o caso ao comparar o desempenho de linguagens de programação e protocolos em ambientes distintos. 
+
+Após a definição do tipo de amostra, torna-se crucial estabelecer um tamanho de amostra adequado que possa garantir a validade estatística dos resultados.
+Para tanto, utiliza-se uma fórmula que permite definir o tamanho da amostra com base em um conjunto de observações preliminares.
+Considerando um nível de confiança de 99\% e 9 graus de liberdade (10 observações preliminares), a variável~\(z\) tem o valor de 3,250 e representa o valor crítico da distribuição t de Student para esse nível de confiança e graus de liberdade especificados. O parâmetro \(r\) é definido como o erro tolerável, fixado em 5\%. A fórmula geral para o cálculo do tamanho da amostra (\(sz\)) para cada combinação de linguagem de programação e protocolo é dada por \cite{jain1991art}:
+\[
+sz = \left( \frac{100 \cdot z \cdot s}{r \cdot \bar{x}} \right)^2
+
+\]
+onde:
+\begin{itemize}
+    \item \(s\) é o desvio padrão das medições prévias,
+    \item \(\bar{x}\) é a média das medições prévias,
+    \item \(z\) é o valor da t de Student para o nível de confiança desejado,
+    \item \(r\) é o erro percentual tolerável.
+\end{itemize}
+
+A tabela abaixo mostra os cáculos para cada aplicação
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Configuração} & \textbf{Média (\(\bar{x}\))} & \textbf{Desvio Padrão (\(s\))} & \textbf{Tamanho da Amostra (\(sz\))} \\
+\hline
+\multicolumn{4}{c}{\textbf{\textit{Big} Request}} \\
+\hline
+Java HTTP & 0.4178722 & 0.02489572 & 17.7724 \\
+Java gRPC & 0.3943912 & 0.02710212 & 19.95165 \\
+Go HTTP & 0.5219623 & 0.03239392 & 11.39082 \\
+Go gRPC & 0.4666094 & 0.02128836 & 14.25365 \\
+\hline
+\end{tabular}
+\caption{Determinando tamanho da amostra para requisições \textit{big}}
+\label{tab:performance_big}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Configuração} & \textbf{Média (\(\bar{x}\))} & \textbf{Desvio Padrão (\(s\))} & \textbf{Tamanho da Amostra (\(sz\))} \\
+\hline
+\multicolumn{4}{c}{\textbf{\textit{Small} Request}} \\
+\hline
+Java HTTP & 0.001589383 & 0.0002316207 & 190.3019 \\
+Java gRPC & 0.001631577 & 0.0003373159 & 180.5865 \\
+Go HTTP & 0.001399864 & 0.0004386 & 245.3175 \\
+Go gRPC & 0.001186249 & 0.0005110324 & 341.624 \\
+\hline
+\end{tabular}
+\caption{Determinando tamanho da amostra para requisições \textit{small}}
+\label{tab:performance_small}
+\end{table}
+
+Conforme observado nas tabelas acima, o valor mais alto de tamanho de amostra necessário foi identificado para a configuração Go gRPC, exigindo 341 observações para alcançar o nível de confiança estatística necessário.
+Esse requisito elevado pode ser atribuído ao desvio padrão relativamente maior observado nessa configuração, comparado às demais.
+As outras configurações, devido a um desvio padrão menor, demonstraram a necessidade de um número menor de observações para atingir a mesma confiança estatística.
+Seguindo uma abordagem estatística conservadora e com o objetivo de garantir a robustez dos resultados em todas as configurações, será definido o número de observações em 350 para todas as configurações.
+Essa decisão assegura uma margem de confiança adequada, mesmo nas situações de maior variabilidade, e facilita a implementação e comparação dos resultados entre as diferentes tecnologias analisadas.
+
+O experimento foi cuidadosamente executado e os dados relevantes foram coletados com precisão.
+A primeira etapa na análise desses dados consistiu em verificar a aderência à normalidade da distribuição, um aspecto crucial para a determinação dos métodos estatísticos a serem aplicados posteriormente.
+A normalidade dos dados é uma premissa fundamental para uma ampla gama de testes estatísticos.
+Para avaliar a normalidade, serão empregadas duas abordagens complementares: a visualização dos dados por meio de histogramas e a aplicação do teste de Shapiro-Wilk.
+O histograma oferece uma representação gráfica que pode sugerir visualmente a simetria e a forma da distribuição dos dados, enquanto o teste de Shapiro-Wilk fornece uma medida objetiva para avaliar a hipótese de normalidade.
+Os resultados obtidos por meio do teste de Shapiro-Wilk são essenciais para esta análise, indicando de forma quantitativa se os dados se desviam significativamente de uma distribuição normal.
+Abaixo, apresentamos uma tabela com os resultados do teste de Shapiro-Wilk para cada conjunto de dados coletado, permitindo uma avaliação precisa da normalidade e orientando as decisões sobre as técnicas estatísticas mais apropriadas para o prosseguimento da análise.
+
+\begin{table}[h]
+\centerin
+\begin{tabular}{lccc}
+\hline
+\textbf{Configuração} & \textbf{\(W\)} & \textbf{Valor-p} \\
+\hline
+\multicolumn{3}{c}{\textbf{\textit{Small} Request}} \\
+\hline
+Java HTTP & 0.20075 & < 2.2e-16 \\
+Java gRPC & 0.24176 & < 2.2e-16 \\
+Go HTTP & 0.90576 & 5.994e-14 \\
+Go gRPC & 0.93448 & 2.734e-11 \\
+\hline
+\end{tabular}
+\caption{Resultados do Teste de Shapiro-Wilk para Requisições \textit{Small}}
+\label{tab:shapiro-results-small}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\hline
+\textbf{Configuração} & \textbf{\(W\)} & \textbf{Valor-p} \\
+\hline
+\multicolumn{3}{c}{\textbf{\textit{Big} Request}} \\
+\hline
+Java HTTP & 0.92997 & 9.419e-12 \\
+Java gRPC & 0.95032 & 1.786e-09 \\
+Go HTTP & 0.93732 & 5.497e-11 \\
+Go gRPC & 0.92781 & 5.731e-12 \\
+\hline
+\end{tabular}
+\caption{Resultados do Teste de Shapiro-Wilk para Requisições \textit{Big}}
+\label{tab:shapiro-results-big}
+\end{table}
+
+A análise dos resultados obtidos pelos testes de Shapiro-Wilk revela que, independentemente do tamanho da requisição, nenhum dos conjuntos de dados segue uma distribuição normal. Os valores-p em todas as configurações são significativamente menores que o limiar de 0.05, o que leva à rejeição da hipótese de normalidade para todos eles. Mesmo nos casos onde os valores de \(W\) são relativamente mais altos, indicando uma possível proximidade com a normalidade, os valores-p sublinham uma clara descontinuidade com a distribuição normal.
+
+Após a aplicação dos testes de Shapiro-Wilk, os quais revelaram um desvio da normalidade nos conjuntos de dados analisados, o próximo passo na análise consiste na avaliação visual dos histogramas.
+Essa inspeção gráfica oferece uma perspectiva adicional sobre a distribuição dos dados, complementando os achados quantitativos dos testes estatísticos.
+Os histogramas são especialmente valiosos para identificar características da distribuição, tais como assimetria e a presença de modas, que podem não ser evidentes através dos testes de normalidade.
+Abaixo, encontram-se os histogramas para os dados associados às requisições de tamanho "\textit{small}".
+
+% Histogramas para requisições Small
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/small_javahttp.png}
+    \caption{Histograma Java HTTP com requisições \textit{small}}
+    \label{fig:small_javahttp}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/small_javagrpc.png}
+    \caption{Histograma Java gRPC com requisições \textit{small}}
+    \label{fig:small_javagrpc}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/small_gohttp.png}
+    \caption{Histograma Go HTTP com requisições \textit{small}}
+    \label{fig:small_gohttp}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/small_gogrpc.png}
+    \caption{Histograma Go gRPC com requisições \textit{small}}
+    \label{fig:small_gogrpc}
+\end{figure}
+
+Continuando a análise, após a avaliação visual dos histogramas para as requisições de tamanho "\textit{small}", segue-se agora a inspeção dos histogramas correspondentes às requisições de tamanho "\textit{big}". 
+
+% Histogramas para requisições Big
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/big_javahttp.png}
+    \caption{Histograma Java HTTP com requisições \textit{big}}
+    \label{fig:big_javahttp}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/big_javagrpc.png}
+    \caption{Histograma Java gRPC com requisições \textit{big}}
+    \label{fig:big_javagrpc}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/big_gohttp.png}
+    \caption{Histograma Go HTTP com requisições \textit{big}}
+    \label{fig:big_gohttp}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth]{imgs/big_gogrpc.png}
+    \caption{Histograma Go gRPC com requisições \textit{big}}
+    \label{fig:big_gogrpc}
+\end{figure}
+
+Após a análise dos histogramas, tanto para as requisições de tamanho "\textit{small}" quanto "\textit{big}", torna-se evidente que nenhuma das distribuições de dados segue uma normalidade perfeita. Os histogramas revelam desvios significativos em relação à forma de sino característica de uma distribuição normal, incluindo assimetrias e a presença de picos não característicos. Essa observação visual corrobora os resultados obtidos anteriormente pelos testes de Shapiro-Wilk, reforçando a conclusão de que as configurações analisadas apresentam distribuições que se afastam da normalidade
+

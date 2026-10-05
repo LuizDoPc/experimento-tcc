@@ -1,0 +1,305 @@
+\documentclass{uflamon}          % classe base para a monografia
+
+%==============================================================================
+% Utilizacao de pacotes
+\usepackage[T1]{fontenc}         % usa fontes postscript com acentos
+\usepackage[brazil]{babel}       % hifenização e títulos em português do Brasil
+\usepackage[utf8]{inputenc}     % permite edição direta com acentos
+\usepackage{amsmath}             % pacote da AMS para Matemática Avançada
+\usepackage{amssymb}             % símbolos extras da AMS
+\usepackage{latexsym}            % símbolos extras do LaTeX
+\usepackage{graphicx}            % para inserção de gráficos
+\usepackage{listings}            % para inserção de código
+\usepackage{fancyvrb}            % para inserção de saídas de comandos
+%\usepackage{enumerate}           % para personalizar lista enumeradas 
+											%(incluso na classe)
+\usepackage{longtable}           % para tambelas muito grandes NOVO!!!!
+
+\usepackage{colortbl} % cores em tabelas
+\newcolumntype{Z}{|>{\columncolor[gray]{0.9}}l|} %cor cinza em células
+%\usepackage{array} % já incluso na classe
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+\usepackage{multirow} % para juntar duas linhas em uma só
+
+\usepackage{multicol} % para uso de várias colunas
+
+% cores para os links cruzados
+\usepackage{color}
+\definecolor{rltred}{rgb}{0.2,0,0}
+\definecolor{rltgreen}{rgb}{0,0.2,0}
+\definecolor{rltblue}{rgb}{0,0,0.2}
+
+\usepackage[colorlinks=true,
+            urlcolor=rltblue,       % \href{...}{...} external (URL)
+            filecolor=rltgreen,     % \href{...} local file
+            linkcolor=rltred,       % \ref{...} and \pageref{...}
+            citecolor=rltgreen,
+            pdftitle={TccLuizVersaoFinal},
+          pdfauthor={Luiz Otávio Andrade Soares},
+          pdfsubject={Comparação do desempenho de Java, Go HTTP e gRPC em aplicações distribuídas},
+          pdfkeywords={Comunicação Científica. 2. Pesquisa . 3. Pesquisa Científica. 
+ 					 4. Redação. 5. Monografia.}%
+]{hyperref} % para referência cruzadas
+%\usepackage{hyperref}            % para referência cruzadas
+\usepackage{subfigure}           % figuras dentro de figuras
+\usepackage{caption}            % remodelando o formato dos títulos de 
+                                 % tabelas e figuras
+
+% configuração padrão do listings   
+\lstset{
+   language=Java,
+   extendedchars=true,
+   tabsize=3,
+   basicstyle=\footnotesize\ttfamily,
+   stringstyle=\em,
+   showstringspaces=false 
+}
+
+% para referências de acordo com a ABNT
+% precisa instalar o abntex2 antes!!!
+% http://abntex.codigolivre.org.br/
+% comente se pretende usar outro padrão
+
+%abnt-emphasize=bf coloca o título das bibliografias em negrito
+%abnt-thesis-year=both
+\usepackage[alf,abnt-etal-cite=3,abnt-etal-list=3,abnt-url-package=url,abnt-emphasize=bf]{abntex2cite}
+\usepackage{colortbl}
+
+% evite usar o hyperref com abntex, pode dar caca em urls... no linha anterior, informo
+% para incluir urls usando o pacote url e não o hyperref
+%
+% caso queira o hyperref com abntex, comente a linha anterior e descomente a seguinte
+%\usepackage[alf,abnt-etal-cite=3,abnt-etal-list=0,abnt-etal-text=emph]{abntex2cite}
+%
+% caso vc ainda use a versão anterior da abntex, comente a linha incluindo o abntex2cite
+% e descomente a próxima linha 
+%\usepackage[alf,abnt-etal-cite=3,abnt-etal-list=0,abnt-etal-text=emph]{abntcite}
+
+
+% redefinindo formatação de títulos de tabelas e figuras
+
+
+%==============================================================================
+% para os fãs do Word, descomente as linhas abaixo
+%\sloppy %mais espaço entre as linhas
+%\usepackage{identfirst} %identando-se a primeira linha de cada seção
+%\noindentfirst % Tire o comentário para manter o padrão do LaTeX.
+
+%============================================================================
+% definido comandos na monografia - não é necessário na sua monografia 
+% apenas para exemplificar a definição de novos comandos
+\newcommand{\defs}[1]{\textsl{#1}}
+\newcommand{\mcode}[1]{$\mathtt{#1}$}
+\newcommand{\pargenerico}[2]{\mcode{({#1},{#2})}}
+\newcommand{\gogrpc}{\pargenerico{Go}{gRPC}}
+\newcommand{\gorest}{\pargenerico{Go}{REST}}
+\newcommand{\javagrpc}{\pargenerico{Java}{gRPC}}
+\newcommand{\javarest}{\pargenerico{Java}{REST}}
+
+\newcommand{\okterra}[1]{\textcolor{blue}{#1}}
+\newcommand{\okterrasblp}[1]{\textcolor{black}{#1}}
+\newcommand{\noterrasblp}[1]{}
+\newcommand{\aspas}[1]{{``#1''}}
+\newcommand{\aspassimples}[1]{{`#1'}}
+
+
+
+% Especificando hifenizações que por ventura LaTeX não saiba fazer
+% Por padrão 99,9% dos termos em português devem ser hifenizados corretamente.
+\hyphenation{hardware software Li-nux am-bien-te diag-nos-ti-car coor-de-na-ção 
+FAE-PE Recovery TelEduc Williams UFLA}
+
+%==============================================================================
+% Dados da monografia, capa: autor, titulo, banca, etc... - SUBSTITUA DE ACORDO
+%==============================================================================
+\author{Luiz Otávio Andrade Soares}
+\title{Go x Java e gRPC x REST: Um estudo empírico}
+\engtitle{Go vs. Java and gRPC vs. REST: An Empirical Study}
+\date{2024}
+\tipo{Artigo apresentado à Universidade Federal de Lavras, como parte das exigências do Curso de Ciência da Computação, para a obtenção do título de Bacharel.}
+% use \orientador ou \orientadora quando for o caso
+\orientador{Prof. DSc. Ricardo Terra Nunes Bueno Vilela}
+%\orientadora{}
+% use \coorientador ou \coorientadora quando for o caso
+% \coorientador{Prof. DSc. Rafael Serapilha Durelli} % comente se não tiver coorientador
+%\coorientadora{}
+\local{Lavras -- MG}
+\bancaum{Prof. DSc. Ricardo Terra Nunes Bueno Vilela}{DCC - UFLA}
+\bancadois{Prof. DSc. Rafael Serapilha Durelli}{DCC - UFLA} % comente se sua banca tiver só um professor
+\bancatres{Prof. DSc. Mayron César de Oliveira Moreira}{DCC - UFLA}
+\defesa{19 de Julho de 2024}
+%==============================================================================
+%##################################################
+% Dados para Ficha catalográfica, gerada pelo sistema da Biblioteca da UFLA
+% http://www.biblioteca.ufla.br/FichaCatalografica/
+% dados para ficha catalográfica
+% Elaboração da Ficha Catalográfica
+\preparofichacat{Ficha catalográfica elaborada pela Coordenadoria de Processos Técnicos \\ da Biblioteca Universitária da UFLA}
+% primeiro autor - como na primeira linha da ficha catalográfica
+\fcautor{Soares, Luiz Otávio Andrade}
+% autores, separados por vírgula - na ficha catalográfica, no formato que
+% vem após o título e a barra ("/")
+\fcautores{Luiz Otávio Andrade Soares}
+% caso trabalho seja ilustrado (figuras, gráficos, tabelas, etc.), 
+% então informar por meio do comando a seguir
+% caso não seja ilustrado, basta comentá-lo
+% \fcilustrado{il.}
+% dados da edição para a ficha 
+\fcedicao{2$^a$ ed. rev., atual. e ampl.}
+% tipo do trabalho (tese, dissertação, etc.), de acordo com sistema
+% de geração de ficha catalográfica
+\fctipo{Monografia(graduação)}
+% ano da defesa, só precisa informar se for diferente do ano da publicação
+% se forem iguais, comente a linha a seguir
+\fcdatadefesa{2024}
+% preencher aqui com os dados de catalogação gerados pelo sistema
+\fccatalogacao{1. TCC. 2. Monografia. 3. Dissertação. 4. Tese. 5. Trabalho Científico – Normas. I. Universidade Federal de Lavras. II. Título.}
+\fcclasi{808.066}
+
+%##################################################
+
+%\antesfichacat{\noindent Para citar este documento: \\UNIVERSIDADE FEDERAL DE LAVRAS. Biblioteca Universitária. \textbf{Manual de normalização e estrutura de trabalhos acadêmicos: TCC, monografias, dissertações e teses}. 2. ed. rev., atual. e ampl. Lavras, 2015. Disponível em: \url{http://www.biblioteca.ufla.br/wordpress/wpcontent/uploads/bdtd/manual_normalizacao_UFLA.pdf}. Acesso em: data de acesso.}
+
+%\depoisfichacat{\noindent A reprodução e a divulgação total ou parcial deste trabalho são autorizadas, por qualquer meio convencional ou eletrônico, para fins de estudo e pesquisa, desde que citada a fonte.\\
+%\newline
+%{\small Este documento possui páginas em branco para facilitar a impressão frente-e-verso.}}
+
+%##################################################
+
+%##################################################
+
+% para os exemplos do manual
+%\newenvironment{exemplomanual}{
+%\vspace{0.5cm}
+%\noindent\begin{minipage}{\textwidth}
+%\noindent\rule{\textwidth}{0.5pt}
+%\vspace{-1cm}
+%\begin{flushleft}
+%}{
+%\end{flushleft}
+%\vspace{-0.6cm}
+%\noindent\rule{\textwidth}{0.5pt}
+%\vspace{0.3cm}
+%\end{minipage}
+%}
+
+%\newenvironment{exemplomanuallista}{
+%\vspace{0.3cm}
+%\noindent\begin{minipage}{\textwidth - 0.5cm}
+%\noindent\rule{\textwidth}{0.5pt}
+%\vspace{-1cm}
+%\begin{flushleft}
+%}{
+%\end{flushleft}
+%\vspace{-0.6cm}
+%\noindent\rule{\textwidth}{0.5pt}
+%\vspace{0.3cm}
+%\end{minipage}
+%}
+
+% por conta de alguns exemplos
+%\usepackage{setspace}
+
+%##################################################
+
+% se vc já defendeu e tem o arquivo escaneado da folha de rosto, 
+% descomente e altere o nome do arquivo
+%\folhaAprovacaoAssinada{folharosto}
+
+% Aqui começa o documento propriamente dito
+\begin{document}
+
+\maketitle
+
+\dedic{À minha família, amigos e ao meu amor}     % Dedicatórias\\
+
+\thanks{
+Primeiramente, agradeço à minha família, cujo apoio incondicional foi fundamental durante toda esta jornada.
+Um agradecimento especial à minha avó Maria Alice, que não apenas me inspirou com sua sabedoria e carinho, mas também viabilizou a minha oportunidade de estudar fora.
+Sem o seu apoio, essa conquista não seria possível.
+Sua generosidade e dedicação são fontes de força e motivação que levarei comigo para sempre.
+
+À minha mãe Eva, que sempre acreditou no meu potencial e me incentivou a seguir em frente, mesmo nos momentos mais desafiadores, meu profundo agradecimento.
+Ao meu irmão João Bruno, que, com sua amizade e carinho, tornou cada etapa deste caminho mais leve e significativa.
+
+Gostaria de agradecer também à minha república, Último Gole, por todos os momentos de descontração e companheirismo, que foram essenciais para manter o equilíbrio durante os estudos.
+A convivência com vocês foi uma parte importante da minha experiência universitária, e sou grato por cada instante compartilhado.
+
+Um agradecimento especial à minha namorada, Laura Sarto, pelo apoio, paciência e por estar ao meu lado em todos os momentos, celebrando as conquistas e oferecendo conforto nas dificuldades.
+Sua presença foi um alicerce sólido ao longo desta jornada.
+
+Por fim, agradeço a todos que, de alguma forma, contribuíram para a realização deste trabalho.
+Agradeço a todos os professores, amigos e colegas que fizeram parte dessa trajetória.
+}         % Agradecimentos
+
+\epigrafe{ % citação opcional
+No meio do caminho tinha uma pedra, tinha uma pedra no meio do caminho.\\
+(Carlos Drummond de Andrade)}
+
+% palavras-chave
+\palchaves{Linguagens de programação, estilo arquitetural de comunicação, estudo empírico}
+
+\resumo{Este trabalho investiga a influência das linguagens de programação Java e Go e das arquiteturas de comunicação REST e gRPC no desempenho de APIs. A questão de pesquisa~\#1 investigou qual par {\em (linguagem,arquitetura-comunicação)} provê melhor desempenho. Por um lado, pares \gogrpc{} e \javagrpc{} se destacaram em requisições de tamanhos usuais ({\em StdSize}) possivelmente devido à eficiência na compactação de dados e na redução de latência oferecida pelo gRPC. Por outro lado, pares \gorest{} e \javarest{} se destacaram em requisições de grande volume~({\em LargeSize}) provavelmente devido à flexibilidade do REST em lidar com grandes volumes de dados sem estrutura rígida. A questão de pesquisa \#2, de forma complementar, investigou a influência de cada fator no desempenho. Um projeto fatorial $2^kr$ concluiu que enquanto a linguagem de programação exerce uma influência de 2\%, a arquitetura de comunicação influencia 94\%.}  % Resumo (digite aqui o resumo)
+
+% keywords devem vir antes do abstract
+\keywords{Programming Languages, Communication Architectural Style, Empirical Study} % keywords
+\abstract{This study investigates the influence of the Java and Go programming languages and the REST and gRPC communication architectures on the performance of APIs. Research Question \#1 examined which pair (language, communication architecture) provides better performance. On one hand, the pairs (Go, gRPC) and (Java, gRPC) excelled in standard-size requests (StdSize), possibly due to the efficiency in data compression and latency reduction offered by gRPC. On the other hand, the pairs (Go, REST) and (Java, REST) stood out in handling large-volume requests (LargeSize), likely due to REST's flexibility in managing large data volumes without a rigid structure. Complementarily, Research Question \#2 investigated the influence of each factor on performance. A 2kr factorial design concluded that while the programming language exerts a 2\% influence, the communication architecture influences 94\%.}
+
+%##################################################
+
+% Dados do guia
+%\begin{titlepage}
+%\pagestyle{empty}
+%\renewcommand{\baselinestretch}{1}
+%\enlargethispage{1.5cm}
+%\input{reitoria}
+%\cleardoublepage
+%\end{titlepage}
+
+%##################################################
+
+% descomente para habilitar a lista desejada
+\listoffigures                             % Lista de Figuras
+%\listofilustracoes
+%\listofgraficos							   % Lista de Gráficos
+\listoftables                              % Lista de Tabelas
+% \listofquadros							   % Lista de Quadros
+%\listofexemplos
+%\listofteoremas
+\tableofcontents                           % Sumário
+
+\clearpage
+
+\pagestyle{ufla}
+
+%==============================================================================
+% incluindo os capitulos
+\include{introducao}
+% \include{referencial}
+% \include{metodologia}
+% \include{resultados}
+\include{artigo}
+\include{conclusao}
+
+%==============================================================================
+% Incluindo bibliografia
+%\bibliographystyle{plain}             % estilo para labels em numeros
+%\bibliographystyle{alpha}             % estilo para labels em iniciais
+\bibliographystyle{abntex2-alf}           % estilo para referências usando ABNT, 
+                                       % precisa instalar o abntex para usar!!!
+
+%inclui Referências Bibliográficas
+%inclui Referências Bibliográficas
+\referencias
+\bibliography{refbib}			% arquivo exemplo refbib.bib
+%==============================================================================
+% Incluindo anexos num1erados com letras maiusculas.
+%\apendices
+% \include{apendice1}
+
+
+%==============================================================================
+% Fim do texto
+\end{document}

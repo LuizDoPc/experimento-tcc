@@ -1,0 +1,37 @@
+\chapter{INTRODUÇÃO}
+
+As APIs ({\em Application Programming Interfaces}) desempenham um papel crucial no desenvolvimento de sistemas,
+facilitando a integração e comunicação entre diferentes sistemas de software e plataformas, 
+permitindo assim uma maior modularidade, escalabilidade e reutilização de código~\cite{apiArchitecture}.
+%
+Na prática usual adotada por fábricas de software, utiliza-se o protocolo HTTPS~(\textit{Hypertext Transfer Protocol Secure}) para 
+facilitar a comunicação e transferência de dados na Internet
+e o estilo arquitetural de comunicação REST (\textit{Representational State Transfer}) 
+para organizar e acessar serviços web de maneira padronizada~\cite{rfc2616, fielding2000architectural}.
+Isso se consolidou como o padrão usual para a criação de sistemas distribuídos robustos~\cite{restPop, apiArchitecture, restRefact}.
+
+A ascensão de Go e gRPC, promovida significativamente pelo Google, marca uma evolução nas tecnologias de desenvolvimento de software~\cite{go2012, grpc2015}. Go destaca-se pela sua simplicidade e eficiência no manejo de operações concorrentes, enquanto gRPC revitaliza o conceito de chamadas de procedimento remoto (RPC) ao integrar funcionalidades do HTTP/2, facilitando comunicações rápidas e eficientes por meio de \textit{Protocol Buffers} para serialização de dados. Essas características são particularmente benéficas para microsserviços e aplicações que demandam alto desempenho e baixa latência.
+
+\noterrasblp{
+Na literatura atual, é comum encontrar estudos comparativos de tecnologias que frequentemente apresentam metodologias pouco definidas \cite{javaVsGo, kaminski2023comparative,optimalPythonR}. 
+Além disso, nota-se a falta de rigor na aplicação de métodos estatísticos para a análise dos resultados, ou até ausência de métodos estatísticos \cite{restGraphqlGrpc,kaminski2023comparative, berg2023benchmarking}. A maioria desses estudos se baseia em experimentos práticos sem uma estrutura metodológica robusta, o que pode limitar a validade e a confiabilidade das conclusões. Em contraste, este trabalho se diferencia ao empregar uma metodologia bem definida e o uso de métodos estatísticos rigorosos para corroborar as análises.
+}
+
+Este artigo, portanto, conduz um estudo empírico que emprega procedimentos estatísticos rigorosos para quantificar as melhorias oferecidas por uma linguagem de programação e um estilo arquitetural de comunicação considerados promissores.
+%
+Partindo da presunção de que Java é uma linguagem consolidada no mercado, assim como REST é quase sempre adotado
+como o estilo arquitetural de comunicação, este estudo 
+(i)~investiga a combinação mais eficiente entre as linguagens de programação Go e Java e os estilos arquiteturais de
+comunicação gRPC e REST e
+(ii)~quantifica a influência da linguagem de programação e do estilo arquitetural de comunicação na eficiência.
+
+A partir de quatro implementações -- \gogrpc{}, \gorest{}, \javagrpc{} e \javarest{} -- de uma
+mesma aplicação, a questão de pesquisa \#1 investigou qual par {\em (linguagem,arquitetura-comunicação)} provê melhor desempenho e comprovou diferença estatística entre todos os pares. Além disso, as análises indicaram que os pares \gogrpc{} e \javagrpc{} se destacam em requisições de tamanhos usuais~({\em StdSize}) 
+possivelmente devido à eficiência na compactação de dados e na redução de latência oferecida pelo gRPC.
+Por outro lado, pares \gorest{} e \javarest{} se destacaram em requisições de grande volume~({\em LargeSize})
+provavelmente devido à flexibilidade do REST em lidar com grandes volumes de dados sem estrutura rígida.
+%
+A questão de pesquisa \#2, de forma complementar, investigou a influência de cada fator no desempenho por meio de um projeto fatorial $2^kr$. Essa análise concluiu que a linguagem de programação exerce uma influência de 2\%, enquanto que
+a arquitetura de comunicação influencia 94\%.   
+
+Este documento está organizado como a seguir. A Seção~\ref{sec:artigo} contém o artigo completo, enquanto a seção~\ref{cap:conclusao} contém considerações finais acerca do estudo conduzido.

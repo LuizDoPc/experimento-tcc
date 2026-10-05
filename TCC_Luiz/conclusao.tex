@@ -1,0 +1,23 @@
+\chapter{CONCLUSÃO}
+\label{cap:conclusao}
+
+A motivação para este estudo surgiu da necessidade crescente de desenvolver APIs robustas e eficientes que possam atender às exigentes demandas de desempenho e escalabilidade de sistemas de software atuais. Diante disso, 
+foi conduzido um estudo empírico que emprega procedimentos estatísticos rigorosos para quantificar as melhorias oferecidas por uma linguagem de programação e um estilo arquitetural de comunicação considerados promissores dentro de um contexto de sistemas distribuídos, abordando especificamente Go e Java e gRPC e REST. 
+
+A pesquisa foi impulsionada por duas principais questões de pesquisa: (i)~qual a combinação mais eficiente entre as linguagens de programação Go e Java e os estilos arquiteturais de comunicação gRPC e REST e (ii)~qual a influência da linguagem de programação e do estilo arquitetural de comunicação na eficiência. 
+
+A questão de pesquisa~\#1 evidenciou que Go apresenta desempenho superior tanto em requisições \textit{StdSize} quanto \textit{LargeSize}, 
+comparado ao Java. Esse resultado sugere que a seleção de Go em combinação com gRPC, pode oferecer vantagens substanciais em termos de eficiência, especialmente em ambientes que requerem comunicações frequentes e de alto desempenho.
+
+A questão de pesquisa~\#2 conclui que -- de fato -- a influência da arquitetura de comunicação é de 94\% no desempenho.
+\okterrasblp{
+Isso indica que, ao substituir REST por gRPC, existem cenários em que fábricas de software podem ter uma melhoria de desempenho em seus sistemas 
+sem necessitar de uma reescrita de código em uma linguagem de programação diferente.}
+
+\noterrasblp{A diferença de desempenho entre REST e gRPC nos diferentes tamanhos de requisição pode ser atribuída a diversos fatores inerentes às duas arquiteturas de comunicação. O gRPC, por ser baseado no protocolo HTTP/2 e utilizar a serialização Protobuf, é mais eficiente em termos de latência e consumo de recursos para transmissões de dados menores devido à sua capacidade de multiplexação de múltiplas chamadas em uma única conexão. Já o REST, com sua simplicidade e ampla adoção, tende a ser mais eficiente para requisições maiores, possivelmente devido à sua capacidade de lidar com cargas de dados mais pesadas e menos dependência de conexões simultâneas.}
+
+Trabalhos futuros incluem: 
+(i)~avaliar a eficiência com requisições de diversos tamanhos a fim de encontrar pontos de transição onde uma arquitetura de comunicação pode superar outra; 
+(ii)~avaliar a eficiência com diferentes frequências de solicitações, a fim de obter os limiares de desempenho de REST e gRPC em situações de estresse;
+(iii)~avaliar em diferentes configurações de infraestrutura como rede, CPU, memória, etc.; e
+\okterrasblp{(iv)~avaliar o desempenho com algoritmos específicos no servidor, a fim de medir o impacto de funcionalidades especificas das linguagens, como paralelismo e gerenciamento de memória.}
