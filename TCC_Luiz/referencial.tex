@@ -1,0 +1,99 @@
+\chapter{REFERENCIAL TEÓRICO}
+
+\subsection{Kubernetes}
+
+A programação paralela e distribuída é uma área de pesquisa que se concentra em como os sistemas de computação podem ser projetados para executar tarefas de forma simultânea e eficiente. O livro "Foundations of Multithreaded, Parallel, and Distributed Programming" de G. Andrews é uma obra seminal que discute os princípios básicos da programação paralela e distribuída\cite{andrews1999foundations}. Este trabalho é fundamental para entender como diferentes componentes de um sistema distribuído interagem entre si e como eles podem ser otimizados para melhor desempenho.
+
+Além disso, o livro aborda o conceito de "Histórias e Estados", que são fundamentais para entender como um sistema distribuído evolui ao longo do tempo. Este conceito é particularmente importante quando se considera a tolerância a falhas e a recuperação em sistemas distribuídos\cite{andrews1999foundations}.
+
+A arquitetura em sistemas distribuídos é um tópico complexo que abrange várias camadas, desde a infraestrutura física até as aplicações em execução. Kubernetes tem emergido como uma solução líder para orquestrar contêineres em sistemas distribuídos, oferecendo uma série de recursos que facilitam o gerenciamento, escalabilidade e alta disponibilidade\cite{ermolenko2021iot}.
+
+Kubernetes oferece uma abstração de alto nível que permite o gerenciamento eficiente de microserviços, que são componentes fundamentais em sistemas distribuídos modernos. Isso é especialmente útil em cenários onde a latência e a eficiência são cruciais, como em aplicações de grande escala e sistemas de tempo real.
+
+Kubernetes é uma plataforma de gerenciamento de contêineres que automatiza muitos dos processos manuais envolvidos na implantação e escalabilidade de aplicações\cite{ermolenko2021iot}. Ele agrupa contêineres de uma aplicação em unidades lógicas para um gerenciamento simples e possibilitar descoberta\cite{kubernetes2017orchestration}. Kubernetes oferece uma estrutura que não só permite a escalabilidade, mas também a gestão do estado e a recuperação de falhas, tornando-se uma escolha popular para orquestrar sistemas distribuídos.
+
+Ele opera com uma arquitetura mestre-trabalhador, onde o nó mestre é responsável pelo gerenciamento do cluster e os nós trabalhadores são onde os contêineres são executados\cite{kubernetes2017orchestration}. No nó mestre, vários componentes desempenham papéis críticos.
+
+O API Server é o ponto de entrada para todas as operações de gerenciamento. Ele expõe a API do Kubernetes e é responsável por processar e validar solicitações RESTful\cite{kubernetes2017orchestration}. O etcd é um armazenamento de chave-valor distribuído que armazena todas as informações de configuração e estado do cluster\cite{han2021tailored}. Ele é usado pelo mestre para recuperar o estado do cluster e tomar decisões informadas.
+
+O Planejador (kube-scheduler) é outro componente crítico que toma decisões sobre onde executar os Pods que ainda não foram alocados em um nó\cite{han2021tailored}. Ele considera vários fatores, como recursos disponíveis, restrições e políticas para fazer essas decisões. O Controlador de Gerenciamento (Controller Manager) é responsável por regular o estado do cluster, gerenciando aspectos como replicação de Pods e balanceamento de carga\cite{kubernetes2017orchestration}.
+
+Nos nós trabalhadores, o kubelet é o agente que se comunica com o mestre e garante que os contêineres estão rodando nos Pods conforme o esperado\cite{kubernetes2017orchestration}. O kube-proxy é responsável pelo roteamento do tráfego de rede para os Pods, e é crucial para o serviço de descoberta e balanceamento de carga\cite{kubernetes2017orchestration}.
+
+Além desses componentes principais, o Kubernetes também oferece abstrações de alto nível como Serviços, que é uma forma de expor um conjunto de Pods como um serviço de rede; e Volumes, que fornecem armazenamento persistente para os Pods\cite{han2021tailored}. Há também o conceito de Namespaces, que permitem a segmentação do cluster em múltiplos espaços virtuais para diferentes aplicações ou equipes\cite{kubernetes2017orchestration}.
+
+Deployments são uma das abstrações mais poderosas oferecidas pelo Kubernetes e são fundamentais para o ciclo de vida de uma aplicação. Eles permitem atualizações contínuas, rollbacks e escalabilidade, tudo isso sem interrupção do serviço. Deployments são controladores de alto nível que usam ReplicaSets para garantir que o número desejado de réplicas de um Pod esteja rodando em um dado momento\cite{hands2019microservices}.
+
+O monitoramento é crucial para a eficiência operacional de qualquer sistema distribuído. Ele não apenas ajuda na detecção precoce de problemas, mas também fornece métricas que podem ser usadas para otimizar o sistema. Em ambientes Kubernetes, o monitoramento é ainda mais crítico devido à natureza dinâmica dos recursos e à necessidade de balanceamento de carga eficiente\cite{epjconf202125102004}.
+
+Prometheus é um sistema de monitoramento e alerta de código aberto que foi projetado para confiabilidade e escalabilidade. Ele coleta métricas de seus alvos em intervalos específicos, avalia regras de alerta, exibe métricas através de consultas e gráficos, e pode acionar alertas se algumas condições forem observadas\cite{epjconf202125102004}.
+
+A kube-prometheus-stack é uma coleção de recursos de monitoramento que fornecem uma maneira fácil de instalar o Prometheus Operator com recursos adicionais. Ela inclui o Prometheus, o Alertmanager e uma série de exporters para coletar métricas de várias fontes. A stack é altamente configurável e extensível, permitindo monitoramento abrangente de clusters Kubernetes\cite{realtime2023edge}.
+
+Grafana é uma plataforma de análise e monitoramento de código aberto que é frequentemente usada em conjunto com sistemas de monitoramento de métricas como Prometheus. Ele permite que os usuários criem painéis visuais ricos que podem exibir métricas de múltiplas fontes, sejam elas Prometheus, Elasticsearch ou bancos de dados SQL. Grafana é especialmente útil em ambientes Kubernetes para visualizar métricas de desempenho, capacidade e disponibilidade em tempo real. Ele oferece uma variedade de opções para consulta e visualização de dados, incluindo gráficos, tabelas e alertas, tornando-se uma ferramenta indispensável para qualquer equipe de DevOps\cite{epjconf202125102004}.
+
+A integração do Grafana com o Prometheus e a kube-prometheus-stack permite uma visão unificada do estado e desempenho do cluster Kubernetes. Isso facilita a identificação de gargalos, a compreensão do comportamento do sistema sob diferentes cargas e a tomada de decisões informadas para otimizações\cite{realtime2023edge}.
+
+\subsection{Java e GO}
+
+O desempenho é uma métrica crucial em sistemas distribuídos, e a escolha da linguagem de programação pode ter um impacto significativo nesse aspecto. Java e Go são duas linguagens de programação amplamente usadas em aplicações distribuídas. Um estudo de Basanta-Val e García-Valls discute a arquitetura Java-centric para sistemas industriais e seu desempenho\cite{basanta2014java}.
+
+Java é uma linguagem de programação orientada a objetos que foi projetada para minimizar as dependências de implementação. Uma das características mais notáveis de Java é o conceito de "Escreva uma vez, execute em qualquer lugar" (WORA, do inglês "Write Once, Run Anywhere"). Isso significa que o código Java compilado, conhecido como bytecode, pode ser executado em qualquer máquina que tenha uma Máquina Virtual Java (JVM), sem a necessidade de recompilação\cite{christopher2000high}.
+
+Esta característica torna Java uma escolha popular para sistemas distribuídos, onde a portabilidade e a interoperabilidade são cruciais. Em um estudo de Basanta-Val e García-Valls, é apresentada uma arquitetura Java-centric para sistemas industriais, demonstrando o desempenho e a eficiência da linguagem em ambientes de tempo real\cite{basanta2014java}.
+
+Java é uma linguagem de programação versátil que oferece uma rica biblioteca padrão e uma variedade de frameworks para facilitar o desenvolvimento de aplicações distribuídas. Entre esses frameworks, o Spring Boot se destaca. Spring Boot é uma extensão do framework Spring, que é uma estrutura abrangente para o desenvolvimento de aplicações empresariais em Java. O Spring Boot simplifica muitas das tarefas complicadas associadas ao Spring, fornecendo uma maneira mais fácil e rápida de configurar e executar aplicações. Ele oferece uma série de "starters" que são modelos de projeto pré-configurados, bem como autoconfigurações que eliminam a necessidade de configuração manual de muitos aspectos da aplicação. Isso permite que os desenvolvedores se concentrem mais na lógica do negócio e menos na configuração da infraestrutura\cite{dhalla2021performance}.
+
+Java também oferece recursos avançados como o Garbage Collector e o Just-In-Time Compiler, que otimizam o desempenho em tempo de execução. Esses recursos tornam Java não apenas portátil, mas também eficiente, tornando-a uma escolha sólida para sistemas distribuídos que exigem alta disponibilidade e desempenho.
+
+Go, também conhecido como Golang, foi desenvolvido pelo Google com o objetivo de resolver alguns dos problemas associados a linguagens de programação mais tradicionais, como C++ e Java. Uma das principais vantagens de Go é sua simplicidade, que permite aos desenvolvedores criar aplicações de forma mais rápida e eficiente. Além disso, Go foi projetado com a concorrência em mente, oferecendo recursos como goroutines e canais que facilitam a programação concorrente e distribuída\cite{grossman2016swat}.
+
+Um dos aspectos mais notáveis de Go é seu desempenho em ambientes de computação de alto desempenho. O trabalho de Grossman e Sarkar, intitulado "SWAT: A Programmable, In-Memory, Distributed, High-Performance Computing Platform", aborda o desempenho de Go em tais cenários\cite{grossman2016swat}. O estudo destaca que Go oferece uma combinação única de eficiência e facilidade de programação, tornando-o uma escolha atraente para aplicações que exigem alto desempenho.
+
+Go também é conhecido por sua eficiência em termos de uso de recursos. A linguagem foi projetada para minimizar o consumo de memória e CPU, o que é especialmente útil em sistemas distribuídos onde os recursos podem ser limitados. Isso é alcançado através de uma série de otimizações de compilação e execução, bem como através do uso eficiente de goroutines, que são muito mais leves do que threads tradicionais\cite{grossman2016swat}.
+
+Além disso, Go oferece uma rica biblioteca padrão que inclui pacotes para lidar com I/O de rede, manipulação de texto e até mesmo criptografia. Isso elimina a necessidade de bibliotecas externas para muitas tarefas comuns, simplificando ainda mais o desenvolvimento de aplicações distribuídas\cite{grossman2016swat}.
+
+Para o desenvolvimento de aplicações web em Go, o framework Gin é frequentemente utilizado. Gin é um framework web de alto desempenho que oferece uma API muito simples e eficiente para criar aplicações web robustas. Ele é conhecido por sua velocidade e pequena pegada de memória, tornando-o uma escolha popular para projetos que exigem alta eficiência e baixo uso de recursos.
+
+Embora não haja artigos acadêmicos que afirmem que o Gin é o framework mais popular para Go, várias métricas comunitárias e industriais sugerem sua popularidade. Por exemplo, o Gin é um dos frameworks Go mais estrelados no GitHub, o que indica um alto nível de engajamento e uso pela comunidade de desenvolvedores\cite{GinGitHub}. Além disso, a frequência de contribuições e atualizações também é um indicador de um projeto ativo e bem mantido\cite{GinGitHubActivity}.
+
+Ambas as linguagens têm suas próprias vantagens e desvantagens em termos de desempenho, e a escolha entre as duas pode depender de vários fatores, incluindo o tipo de aplicação, os requisitos de desempenho e as preferências do desenvolvedor.
+
+\subsection{HTTP e GRPC}
+
+Protocolos de comunicação são fundamentais para o funcionamento eficiente de sistemas distribuídos. HTTP e gRPC são dois protocolos comumente usados para esse fim. O HTTP (Protocolo de Transferência de Hipertexto) é um protocolo de aplicação para sistemas de informação distribuídos, colaborativos e hipermedia. Ele é a base da comunicação de dados para a World Wide Web e é usado para transmitir documentos hipermídia, como HTML\cite{fielding1999http}. O HTTP é um protocolo de camada de aplicação que opera sobre a camada de transporte, geralmente utilizando o protocolo TCP para garantir uma entrega confiável de pacotes.
+
+Além disso, o HTTP é frequentemente utilizado em sistemas de controle e filtragem de rede, onde os efeitos induzidos por protocolos de comunicação são uma consideração crítica\cite{zou2021communication}. O protocolo é versátil e pode ser usado para uma variedade de aplicações além da web, incluindo sistemas de controle remoto e comunicações entre máquinas.
+
+O HTTP é um protocolo sem estado, o que significa que cada solicitação do cliente para o servidor é tratada como uma nova conexão. Isso torna o protocolo mais simples, mas também apresenta desafios quando se trata de manter o estado da aplicação. Várias técnicas, como cookies e sessões, foram desenvolvidas para contornar essa limitação.
+
+O HTTP/2, uma versão mais recente do protocolo, oferece várias melhorias de desempenho, incluindo multiplexação de fluxo e compressão de cabeçalho. Essas características tornam o HTTP/2 mais eficiente em termos de largura de banda e latência, especialmente em redes com alta perda de pacotes ou alta latência.
+O gRPC é um protocolo de comunicação baseado em uma evolução do RPC desenvolvido pelo Google. Ele é projetado para funcionar em qualquer ambiente, tornando-o ideal para sistemas distribuídos que requerem comunicação rápida e eficiente entre microserviços\cite{grpc2015high}. O gRPC usa HTTP/2 para transporte, Protocol Buffers como mecanismo de interface e fornece recursos como autenticação, balanceamento de carga e cancelamento de chamadas.
+
+O gRPC é especialmente útil em cenários que envolvem acoplamentos não-lineares entre unidades em sistemas de engenharia, como sistemas de radar e sonar\cite{xu2021dynamic}. O protocolo oferece uma série de vantagens, incluindo baixa latência e alta eficiência, que são cruciais para sistemas que requerem respostas rápidas e confiáveis.
+
+Além disso, o gRPC tem sido aplicado em sistemas de comunicação veicular para melhorar a eficiência da transmissão de dados\cite{hawbani2021fuzzy}. O protocolo é capaz de lidar com diferentes tipos de dados e pode ser facilmente estendido para suportar novos tipos de serviços, tornando-o uma escolha versátil para uma variedade de aplicações.
+
+O gRPC também oferece suporte para comunicação bidirecional em tempo real, o que é especialmente útil para aplicações que requerem uma comunicação contínua entre o cliente e o servidor. Isso é alcançado através do uso de "streams", que permitem que múltiplas mensagens sejam enviadas em ambas as direções como um fluxo contínuo de dados.
+
+Ambos os protocolos têm suas próprias vantagens e desvantagens. HTTP é mais simples e amplamente adotado, tornando-o uma escolha segura para muitas aplicações. No entanto, ele pode não ser ideal para sistemas que requerem comunicação em tempo real devido à sua natureza sem estado e ao overhead adicional de suas mensagens. O gRPC, por outro lado, oferece mais recursos e é mais eficiente em termos de desempenho, mas pode ser mais complexo de configurar e gerenciar\cite{grpc2015high}.
+
+\subsection{Projeto Fatorial 2kr}
+
+O fatorial 2kr é uma técnica de projeto experimental que é usada para estudar o efeito de múltiplas variáveis independentes (fatores) sobre uma variável dependente. O "2k" refere-se ao fato de que cada fator tem dois níveis (geralmente codificados como -1 e +1), e o "r" indica o número de réplicas do experimento completo. O objetivo é entender como os fatores e suas interações afetam a variável de resposta\cite{montgomery2017design}.
+
+Para realizar um projeto fatorial 2kr, o primeiro passo é identificar os fatores e seus níveis. Em seguida, todas as combinações possíveis desses níveis são listadas para formar um conjunto completo de tratamentos experimentais. Cada tratamento é então replicado "r" vezes para aumentar a precisão e a confiabilidade dos resultados. O número de execuções totais do experimento será 2^k * r\cite{box2005statistics}.
+
+Vamos considerar um exemplo simples com dois fatores (A e B) e duas réplicas. Os fatores A e B podem ter dois níveis: -1 e +1. Isso resulta em 4 combinações possíveis de tratamentos: (-1, -1), (-1, +1), (+1, -1) e (+1, +1). Como temos duas réplicas, o experimento completo terá 8 execuções. Os dados coletados são então analisados usando técnicas estatísticas, como a análise de variância (ANOVA), para determinar os efeitos principais e de interação dos fatores sobre a variável de resposta\cite{wasserman2004all}.
+
+A análise subsequente envolve o cálculo das médias das respostas para cada combinação de níveis de fatores e a utilização dessas médias para estimar os efeitos dos fatores e suas interações. Isso é frequentemente feito usando um modelo estatístico que relaciona a variável de resposta às variáveis independentes e seus termos de interação. O modelo é então ajustado aos dados coletados, e testes de hipóteses são realizados para determinar quais efeitos são estatisticamente significativos\cite{lehmann2006theory}.
+
+Uma vez que os efeitos significativos são identificados, eles podem ser usados para fazer previsões sobre a variável de resposta em novas configurações ou para otimizar o sistema em estudo. Além disso, gráficos como gráficos de interação e gráficos de efeitos principais podem ser usados para visualizar os efeitos dos fatores e suas interações, facilitando a interpretação dos resultados\cite{montgomery2017design}.
+
+O fatorial 2kr é uma técnica poderosa, mas também tem suas limitações. Por exemplo, ele assume que os efeitos dos fatores são aditivos e que não há erros de medição. Além disso, como o número de execuções do experimento aumenta exponencialmente com o número de fatores, o fatorial 2kr pode se tornar impraticável para experimentos com muitos fatores\cite{box2005statistics}.
+
+Em resumo, o fatorial 2kr é uma técnica de projeto experimental que permite estudar o efeito de múltiplas variáveis independentes sobre uma variável dependente de forma eficiente. Ele é amplamente utilizado em diversas áreas, como engenharia, ciências da vida e ciências sociais, para otimizar processos, desenvolver novos produtos e testar teorias científicas\cite{wasserman2004all}.
+
+O fatorial 2kr é uma ferramenta valiosa para qualquer pesquisador ou profissional que deseja entender como múltiplas variáveis afetam um resultado de interesse. Ele oferece uma estrutura sistemática para projetar e analisar experimentos, tornando-o uma escolha popular para estudos que requerem rigor estatístico e precisão\cite{lehmann2006theory}.
+
